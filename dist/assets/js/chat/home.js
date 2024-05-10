@@ -4,47 +4,27 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-storage.js";
 import { database, db, auth, storage } from "./config.js";
 import { truncateText } from "./utils.js";
+import { getChatsForUser } from "./roaster.js";
 
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    function listenToPresence() {
-        const presenceRef = rlRef(database, "presence"); // Reference to the entire 'presence' array
+    function setDarkModeAccordingToSystemPreference() {
+        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const currentMode = document.body.getAttribute("data-layout-mode");
 
-        onValue(presenceRef, (snapshot) => {
+        // Set the initial layout mode based on the system preference
+        if (currentMode !== null) {
+            return; // If the mode is already set, do nothing
+        }
 
-            const presenceArray = snapshot.val(); // Get the whole presence array
-
-            if (presenceArray) {
-                // Convert the object to an array of users with their status
-                const users = Object.entries(presenceArray).map(([userId, status]) => ({
-                    userId,
-                    isOnline: status.online || false,
-                    lastOnline: status.lastOnline || null,
-                }));
-
-
-                users.forEach(user => {
-                    document.querySelectorAll('.chat-message-list li .chat-user-img').forEach(item => {
-                        if (item.getAttribute('data-id') === user.userId) {
-                            if (user.isOnline) {
-                                item.classList.remove('offline')
-                                item.classList.add('online')
-                            } else {
-                                item.classList.remove('online')
-                                item.classList.add('offline')
-                            }
-                        }
-                    })
-                });
-
-            } else {
-                console.log("Presence array is empty or not found.");
-            }
-        }, (error) => {
-            console.error("Error listening to presence array:", error);
-        });
+        if (prefersDarkMode) {
+            document.body.setAttribute("data-layout-mode", "dark");
+        } else {
+            document.body.setAttribute("data-layout-mode", "light");
+        }
     }
+
 
     function logout() {
         signOut(auth)
@@ -79,6 +59,161 @@ document.addEventListener("DOMContentLoaded", () => {
             throw error;
         }
     }
+
+
+    // Handle file attachment event
+    document.querySelector('#attachedfile-input').addEventListener('change', async (e) => {
+        const files = e.target.files;
+        const fileArray = [];
+        const currentUserId = localStorage.getItem('userId');
+        const recipientId = localStorage.getItem('chat')
+        const chatId = (recipientId > currentUserId)
+            ? `${recipientId}+${currentUserId}`
+            : `${currentUserId}+${recipientId}`;
+
+        // Upload each file to Firebase Storage
+        for (const file of files) {
+            const fileRef = ref(storage, `uploads/${chatId}/${file.name}`); // Define storage path
+            await uploadBytes(fileRef, file); // Upload the file
+            const downloadURL = await getDownloadURL(fileRef); // Get the download URL
+
+            // Store file details in an array
+            fileArray.push({
+                fileName: file.name,
+                fileUrl: downloadURL,
+                fileSize: file.size,
+            });
+        }
+
+        // Create a message with the file array
+        const message = {
+            type: 'files',
+            sender: currentUserId,
+            recipient: recipientId,
+            timestamp: new Date(),
+            files: fileArray, // Array of file details
+        };
+
+        try {
+            // Add the message to the 'messages' sub-collection
+            const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
+            await addDoc(messagesCollectionRef, message);
+
+            console.log("Files uploaded and message sent:", fileArray);
+        } catch (error) {
+            console.error("Error sending message with files:", error);
+        }
+    });
+
+
+    document.querySelector('#galleryfile-input').addEventListener('change', async (e) => {
+        const files = e.target.files;
+        const imageArray = [];
+        const currentUserId = localStorage.getItem('userId');
+        const recipientId = localStorage.getItem('chat')
+        const chatId = (recipientId > currentUserId)
+            ? `${recipientId}+${currentUserId}`
+            : `${currentUserId}+${recipientId}`;
+    
+        // Check if there are files
+        if (!files || files.length === 0) {
+            console.error("No files selected.");
+            return;
+        }
+    
+        // Upload each image to Firebase Storage
+        for (const file of files) {
+            if (!file.type.startsWith("image/")) {
+                console.error("Not an image file:", file.name);
+                continue; // Skip non-image files
+            }
+    
+            const fileRef = ref(storage, `images/${chatId}/${file.name}`); // Define storage path for images
+            await uploadBytes(fileRef, file); // Upload the image
+            const downloadURL = await getDownloadURL(fileRef); // Get the download URL
+    
+            // Store image details in an array
+            imageArray.push({
+                fileName: file.name,
+                fileUrl: downloadURL,
+                fileSize: file.size,
+            });
+        }
+    
+        // Create a message with the image array
+        const message = {
+            type: 'images',
+            sender: currentUserId,
+            recipient: recipientId,
+            timestamp: new Date(),
+            images: imageArray, // Array with image details
+        };
+    
+        try {
+            // Add the message to the 'messages' sub-collection
+            const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
+            await addDoc(messagesCollectionRef, message);
+    
+            console.log("Images uploaded and message sent:", imageArray);
+        } catch (error) {
+            console.error("Error sending message with images:", error);
+        }
+    });
+
+
+    document.querySelector('#audiofile-input').addEventListener('change', async (e) => {
+        const files = e.target.files;
+        const audioArray = [];
+        const currentUserId = localStorage.getItem('userId');
+        const recipientId = localStorage.getItem('chat')
+        const chatId = (recipientId > currentUserId)
+            ? `${recipientId}+${currentUserId}`
+            : `${currentUserId}+${recipientId}`;
+    
+        // Check if files are selected
+        if (!files || files.length === 0) {
+            console.error("No files selected.");
+            return;
+        }
+    
+        // Upload each audio file to Firebase Storage
+        for (const file of files) {
+            if (!file.type.startsWith("audio/")) {
+                console.error("Not an audio file:", file.name);
+                continue; // Skip non-audio files
+            }
+    
+            const fileRef = ref(storage, `audio/${chatId}/${file.name}`); // Define storage path for audio files
+            await uploadBytes(fileRef, file); // Upload the audio file
+            const downloadURL = await getDownloadURL(fileRef); // Get the download URL
+    
+            // Store audio file details in an array
+            audioArray.push({
+                fileName: file.name,
+                fileUrl: downloadURL,
+                fileSize: file.size,
+            });
+        }
+    
+        // Create a message with the audio array
+        const message = {
+            type: 'audios',
+            sender: currentUserId,
+            recipient: recipientId,
+            timestamp: new Date(),
+            audios: audioArray, // Array with audio details
+        };
+    
+        try {
+            // Add the message to the 'messages' sub-collection
+            const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
+            await addDoc(messagesCollectionRef, message);
+    
+            console.log("Audio files uploaded and message sent:", audioArray);
+        } catch (error) {
+            console.error("Error sending message with audio files:", error);
+        }
+    });
 
 
     // Event listener for foreground image upload
@@ -143,10 +278,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 try {
 
                     user.providerData.forEach((profile) => {
-                       localStorage.setItem('provider', profile.providerId)
+                        localStorage.setItem('provider', profile.providerId)
                     });
 
-                    
+
 
                     localStorage.setItem('userId', user.uid);
                     const userRef = rlRef(database, `presence/${user.uid}`);
@@ -212,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const userQuery = query(usersRef);
         const userDocs = await getDocs(userQuery);
 
-        const userList = document.getElementById("favourite-users");
+        const userList = document.getElementById("all-users");
 
         // Clear the list before inserting new items
         userList.innerHTML = "";
@@ -244,7 +379,6 @@ document.addEventListener("DOMContentLoaded", () => {
         <a href="#"  data-id="${userDoc.id}">
             <span class="chat-user-img offline" data-id="${userDoc.id}">
                 <img src="${user.profileImageUrl || 'https://via.placeholder.com/40'}" class="rounded-circle avatar-xs" alt="">
-                <span class="user-status"></span>
             </span>
             <span class="chat-username">${user.username || 'Unknown User'}</span>
             <span class="chat-user-message">${lastMessageText}</span>
@@ -261,127 +395,10 @@ document.addEventListener("DOMContentLoaded", () => {
             })
         })
 
-        listenToPresence()
-    }
-    function getValidDate(timestamp) {
-        if (!timestamp) {
-            console.error("Invalid timestamp:", timestamp);
-            return new Date(); // Return current date as a fallback
-        }
-
-        if (timestamp instanceof Timestamp) {
-            return timestamp.toDate(); // Convert Firestore Timestamp to Date
-        }
-
-        if (typeof timestamp === "string" || typeof timestamp === "number") {
-            const date = new Date(timestamp);
-            if (isNaN(date)) {
-                console.error("Invalid date conversion:", timestamp);
-                return new Date(); // Return current date as fallback
-            }
-            return date;
-        }
-
-        console.error("Unrecognized timestamp format:", timestamp);
-        return new Date(); // Fallback to current date
     }
 
-    function formatDate(timestamp) {
-        // Convert the given timestamp into a valid JavaScript Date object
-        const date = getValidDate(timestamp);
 
-        // Get today's date and set its time to midnight
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set to midnight to compare only the date
 
-        // Get the current date from the input timestamp and set its time to midnight
-        const inputDate = new Date(date);
-        inputDate.setHours(0, 0, 0, 0);
-
-        const isToday = today.getTime() === inputDate.getTime(); // Check if the input date is today
-
-        if (isToday) {
-            // If it's today's date, return the formatted time
-            return new Intl.DateTimeFormat("en-US", {
-                hour: "numeric",
-                minute: "numeric",
-                second: "numeric",
-                hour12: true,
-            }).format(date);
-        } else {
-            // If it's not today, return a short date format
-            return new Intl.DateTimeFormat("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-            }).format(date);
-        }
-    }
-
-    async function loadChatMessages() {
-        const chatMessagesList = document.getElementById("chat-messages-list"); // The chat conversation list
-        const currentUserId = localStorage.getItem("userId");
-        const recipientId = localStorage.getItem("chat");
-
-        if (recipientId && currentUserId) {
-            // Determine the chat document ID
-            const chatId = (recipientId > currentUserId)
-                ? `${recipientId}+${currentUserId}`
-                : `${currentUserId}+${recipientId}`;
-
-            // Query the 'messages' sub-collection, ordered by timestamp
-            const currentUserDocRef = doc(db, "users", currentUserId); // Reference to the Firestore document
-            const recipientUserDocRef = doc(db, "users", recipientId); // Reference to the Firestore document
-            const currentUserDoc = await getDoc(currentUserDocRef); // Fetch the user data
-            const recipientUserDoc = await getDoc(recipientUserDocRef); // Fetch the user data
-            const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
-            const messagesQuery = query(messagesCollectionRef, orderBy("timestamp"));
-
-            // Listen for real-time updates
-            onSnapshot(messagesQuery, (snapshot) => {
-                chatMessagesList.innerHTML = ""; // Clear existing messages
-
-                snapshot.forEach((doc) => {
-                    const message = doc.data();
-                    const isSentByCurrentUser = message.sender === currentUserId;
-
-                    const messageItem = document.createElement("li");
-                    messageItem.className = `chat-list ${isSentByCurrentUser ? "right" : "left"}`;
-                    const validDate = formatDate(message.timestamp);
-                    if (message.text === 'Hello ali, how are you doing?')
-                        console.log({ sender: message.sender, recipientId, isSentByCurrentUser, dp: currentUserDoc.data()?.profileImageUrl })
-                    const messageContent = `
-                        <div class="conversation-list">
-                            ${!isSentByCurrentUser ? `<div class="chat-avatar">
-                                <img src="${recipientUserDoc.data()?.profileImageUrl || 'https://via.placeholder.com/28'}" alt="" class="rounded-circle">
-                            </div>` : ""}
-                            <div class="user-chat-content">
-                                <div class="ctext-wrap">
-                                    <div class="ctext-wrap-content">
-                                    ${message.type === 'audio' ? `<audio src="${message.audioUrl}" controls/>` : `<span class="ctext-content">${message.text}</span>`}
-                                    </div>
-                                </div>
-                                <div class="conversation-name">
-                                    <span class="chat-time">${validDate}</span>
-                                </div>
-                            </div>
-                            ${isSentByCurrentUser ? `<div class="chat-avatar">
-                                <img src="${currentUserDoc.data()?.profileImageUrl || 'https://via.placeholder.com/28'}" alt="" class="rounded-circle">
-                            </div>` : ""}
-                        </div>
-                    `;
-
-                    messageItem.innerHTML = messageContent;
-                    chatMessagesList.appendChild(messageItem);
-                });
-
-                // Scroll to the bottom to display the latest message
-                chatMessagesList.scrollTop = chatMessagesList.scrollHeight;
-            });
-        } else {
-            console.error("Missing recipient ID or current user ID.");
-        }
-    }
 
 
 
@@ -401,7 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Event listener for the 'Edit' button to enable editing of the profile fields
     document.querySelector(".update-profile-btn")?.addEventListener("click", async function () {
         const updatedData = {
-            username: document.querySelector("#pi-name").value,
+            username: document.querySelector("#pi-name").value.toLocaleLowerCase(),
             email: document.querySelector("#pi-email").value,
             phone: document.querySelector("#pi-phone").value,
             location: document.querySelector("#pi-location").value,
@@ -417,61 +434,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    async function loadChatUser() {
-        // Get the user ID from localStorage
-        const chatUserId = localStorage.getItem('chat');
 
-        if (chatUserId) {
-            const userDocRef = doc(db, "users", chatUserId); // Reference to the Firestore document
-            const userDoc = await getDoc(userDocRef); // Fetch the user data
-
-            if (userDoc.exists()) {
-
-                const presenceRef = rlRef(database, `presence/${chatUserId}`);
-
-                onValue(presenceRef, (snapshot) => {
-                    const status = snapshot.val();
-                    const el = document.querySelector("#users-chat .chat-user-img");
-                    const isOnline = status ? status.online : false;
-                    if (isOnline) {
-                        el.classList.remove("offline");
-                        el.classList.add("online");
-                        document.querySelector('.online-state-text').innerHTML = 'online';
-                    }
-                    else {
-                        el.classList.add("offline")
-                        el.classList.remove("online")
-                        document.querySelector('.online-state-text').innerHTML = 'offline';
-                    }
-                });
-
-
-                const user = userDoc.data(); // Extract the user data
-
-                // Update the chat conversation section
-                document.querySelector("#users-chat img.avatar-sm").src = user.profileImageUrl || 'https://via.placeholder.com/40';
-                document.querySelector("#users-chat .user-profile-show").textContent = user.username || 'Unknown User';
-
-                console.log("User data loaded:", user);
-            } else {
-                console.error("User document not found for ID:", chatUserId);
-            }
-        } else {
-            console.error("No chat user ID found in localStorage.");
-        }
-    }
 
 
     const chatInput = document.querySelector('#chat-input');
+
     document.querySelector('#send-message-btn').addEventListener("click", async function (e) {
-        e.preventDefault()
-        if (!chatInput?.value) return; // Return if there's no message to send
+        e.preventDefault();
+
+        if (!chatInput?.value) {
+            return; // Return if there's no message to send
+        }
 
         const recipientId = localStorage.getItem("chat");
         const currentUserId = localStorage.getItem("userId");
 
         if (recipientId && currentUserId) {
-            // Determine the chat ID based on the larger user ID
+            // Determine the chat ID based on the lexicographically larger user ID
             const chatId = (recipientId > currentUserId)
                 ? `${recipientId}+${currentUserId}`
                 : `${currentUserId}+${recipientId}`;
@@ -484,19 +463,27 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             try {
+                // Reference to the chat document
+                const chatDocRef = doc(db, `chats/${chatId}`);
+
+                // Set the participants and last message in the chat document
+                await setDoc(chatDocRef, {
+                    participants: [currentUserId, recipientId], // Ensure both participants are in the array
+                    lastMessage: message, // Set the last message
+                }, { merge: true }); // Merge to avoid overwriting existing data
+
                 // Reference to the 'messages' sub-collection within the chat document
                 const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
 
-                const chatDocRef = doc(db, `chats/${chatId}`);
-                await setDoc(chatDocRef, { lastMessage: message }, { merge: true });
-
-                // Add a new message to the 'messages' sub-collection
+                // Add the new message to the 'messages' sub-collection
                 await addDoc(messagesCollectionRef, message);
 
                 console.log(`Message sent to chat: ${chatId}`);
                 // Clear the chat input after sending the message
                 chatInput.value = "";
-                chatInput.blur()
+                chatInput.blur();
+
+                getChatsForUser()
             } catch (error) {
                 console.error("Error sending message:", error);
             }
@@ -504,6 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Recipient ID or current user ID is missing.");
         }
     });
+
 
     function setTypingStatus(isTyping) {
         const currentUserId = localStorage.getItem("userId");
@@ -743,61 +731,18 @@ document.addEventListener("DOMContentLoaded", () => {
         updateUserProfileSidebar(localStorage.getItem('chat'))
     })
 
-    async function searchUsersByName(namePrefix) {
-        const usersRef = collection(db, "users");
-    
-        // Query for users where the username starts with the given prefix
-        const usersQuery = query(
-            usersRef,
-            orderBy("username"), // Order by the username field
-            startAt(namePrefix), // Start at the given name prefix
-            endAt(namePrefix + "\uf8ff") // End at the upper bound
-        );
-    
-        const userDocs = await getDocs(usersQuery);
-    
-        // Get the list where you want to append users
-        const userList = document.getElementById("favourite-users");
-    
-        // Clear the current list
-        userList.innerHTML = ""; // Clear previous results
-    
-        // Process the query results
-        userDocs.docs.forEach((doc) => {
-            const userDoc = doc.data();
-            const userItem = document.createElement("li"); // Create a new list item
-            userItem.innerHTML = `
-            <a href="#" data-id="${doc.id}">
-                <span class="chat-user-img offline">
-                    <img src="${userDoc.profileImageUrl || 'https://via.placeholder.com/40'}" class="rounded-circle avatar-xs" alt="">
-                    <span class="user-status"></span>
-                </span>
-                <span class="chat-username">${userDoc.username || 'Unknown User'}</span>
-            </a>`;
-    
-            // Append the new item to the list
-            userList.appendChild(userItem);
-        });
-    }
-    
-
-    document.querySelector('#searchChatUser').addEventListener('keyup', (e) => {
-        searchUsersByName(e.target.value)
-    })
 
 
 
+    setDarkModeAccordingToSystemPreference()
     fetchUsers()
     updateProfile();
-    loadChatUser();
-    loadChatMessages();
+    // loadChatUser();
     listenForTypingState();
     const provider = localStorage.getItem('provider')
     if (provider === 'password') {
-        alert('iff')
         document.querySelector('#change-password-link').style.display = 'block'
     } else {
-        alert('elsee')
         document.querySelector('#change-password-link').style.display = 'none'
     }
 });
