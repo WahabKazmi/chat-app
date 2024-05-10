@@ -42,6 +42,9 @@
     align-items: center;
     padding: 20px 0px;
 }
+.chat-user-img {
+    margin-right: 6px;
+}
 </style>
 </head>
 
@@ -103,6 +106,7 @@
                 <li class="nav-item dropdown profile-user-dropdown">
                     <a class="nav-link dropdown-toggle bg-light" href="#" role="button" data-bs-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
+
                         <img src="assets/images/users/user-dummy-img.jpg" alt="" class="profile-user rounded-circle user-profile-img">
                     </a>
                     <div class="dropdown-menu">
@@ -112,12 +116,15 @@
                         <a class="dropdown-item d-flex align-items-center justify-content-between" id="pills-setting-tab"
                             data-bs-toggle="pill" href="#pills-setting" role="tab">Setting <i
                                 class="bx bx-cog text-muted ms-1"></i></a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between"
+                        <a class="dropdown-item align-items-center justify-content-between"
+                            id="change-password-link"
                             href="auth-changepassword.html">Change Password <i
                                 class="bx bx-lock-open text-muted ms-1"></i></a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
-                            href="auth-logout.html">Log out <i class="bx bx-log-out-circle text-muted ms-1"></i></a>
+                        style="cursor: pointer;"
+                            id="logout-btn"
+                            >Log out <i class="bx bx-log-out-circle text-muted ms-1"></i></a>
                     </div>
                 </li>
             </ul>
@@ -143,23 +150,6 @@
                                     <div class="d-flex w-100 align-items-center">
                                         <div class="flex-grow-1">
                                             <h5 class="text-white mb-0">My Profile</h5>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <div class="dropdown">
-                                                <button class="btn nav-btn text-white dropdown-toggle" type="button"
-                                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class='bx bx-dots-vertical-rounded'></i>
-                                                </button>
-                                                <div class="dropdown-menu dropdown-menu-end">
-                                                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                        href="#">Info <i class="bx bx-info-circle ms-2 text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                        href="#">Setting <i class="bx bx-cog text-muted ms-2"></i></a>
-                                                    <div class="dropdown-divider"></div>
-                                                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                        href="#">Help <i class="bx bx-help-circle ms-2 text-muted"></i></a>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -240,7 +230,7 @@
                         </div>
                         <form>
                             <div class="input-group search-panel mb-3">
-                                <input type="text" class="form-control bg-light border-0" id="searchChatUser" onkeyup="searchUser()"
+                                <input type="text" class="form-control bg-light border-0" id="searchChatUser"
                                     placeholder="Search here..." aria-label="Example text with button addon"
                                     aria-describedby="searchbtn-addon" autocomplete="off">
                                 <button class="btn btn-light p-0" type="button" id="searchbtn-addon"><i
@@ -844,6 +834,18 @@
                                         </div>
 
                                         <div>
+                                            <label for="pi-designation" class="form-label text-muted fs-13">Designation</label>
+                                            <input type="text" class="form-control" id="pi-designation" value=""
+                                                placeholder="Enter designation">
+                                        </div>
+
+                                        <div>
+                                            <label for="pi-bio" class="form-label text-muted fs-13">Bio</label>
+                                            <input type="text" class="form-control" id="pi-bio" value=""
+                                                placeholder="Enter bio">
+                                        </div>
+
+                                        <div>
                                             <label for="pi-email" class="form-label text-muted fs-13">Email</label>
                                             <input type="email" class="form-control" id="pi-email"
                                                 value="" placeholder="Enter email">
@@ -900,14 +902,14 @@
                                     </div>
                                     <div class="flex-grow-1 overflow-hidden">
                                         <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0 chat-user-img online user-own-img align-self-center me-3 ms-0">
-                                                <img src="assets/images/users/avatar-2.jpg" class="rounded-circle avatar-sm" alt="">
+                                            <div class="flex-shrink-0 chat-user-img user-own-img align-self-center me-3 ms-0">
+                                                <img src="assets/images/users/user-dummy-img.jpg" class="rounded-circle avatar-sm" alt="">
                                                 <span class="user-status"></span>
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
                                                 <h6 class="text-truncate mb-0 fs-18"><a href="#"
-                                                        class="user-profile-show text-reset">Victoria Lane</a></h6>
-                                                <p class="text-truncate text-muted mb-0 online-state-text"><small>Online</small></p>
+                                                        class="user-profile-show text-reset">User</a></h6>
+                                                <p class="text-truncate text-muted mb-0 online-state-text"><small>Offline</small></p>
                                             </div>
                                         </div>
                                     </div>
@@ -944,15 +946,9 @@
                                         </button>
                                     </li>
 
-                                    <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
-                                        <button type="button" class="btn nav-btn" data-bs-toggle="modal"
-                                            data-bs-target=".pinnedtabModal">
-                                            <i class='bx bx-bookmark'></i>
-                                        </button>
-                                    </li>
 
                                     <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
-                                        <button type="button" class="btn nav-btn user-profile-show">
+                                        <button type="button" class="btn nav-btn user-profile-show" id="show-profile">
                                             <i class='bx bxs-info-circle'></i>
                                         </button>
                                     </li>
@@ -991,133 +987,8 @@
                     <!-- start chat conversation -->
 
                     <div class="chat-conversation p-3 p-lg-4 " id="chat-conversation" data-simplebar>
-                        <ul class="list-unstyled chat-conversation-list" id="users-conversation">
-                            <ul class="list-unstyled chat-conversation-list" id="chat-messages-list">
-                                <!-- Left-aligned message (received message) -->
-                                <li class="chat-list left">
-                                    <div class="conversation-list">
-                                        <div class="chat-avatar">
-                                            <img src="assets/images/users/avatar-1.jpg" alt="User Avatar" class="rounded-circle">
-                                        </div>
-                                        <div class="user-chat-content">
-                                            <div class="ctext-wrap">
-                                                <div class="ctext-wrap-content">
-                                                    <p class="ctext-content">
-                                                        Hello! How are you?
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div class="conversation-name">
-                                                <span class="chat-time">10:30 AM</span>
-                                                <span class="name">John Doe</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                        
-                                <!-- Right-aligned message (sent message) -->
-                                <li class="chat-list right">
-                                    <div class="conversation-list">
-                                        <div class="user-chat-content">
-                                            <div class="ctext-wrap">
-                                                <div class="ctext-wrap-content">
-                                                    <p class="ctext-content">
-                                                        I'm doing well, thanks! What about you?
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div class="conversation-name">
-                                                <span class="name">Me</span>
-                                                <span class="chat-time">10:35 AM</span>
-                                            </div>
-                                        </div>
-                                        <div class="chat-avatar">
-                                            <img src="assets/images/users/avatar-2.jpg" alt="User Avatar" class="rounded-circle">
-                                        </div>
-                                    </div>
-                                </li>
-                            </ul>
+                        <ul class="list-unstyled chat-conversation-list" id="chat-messages-list">
                         </ul>
-
-                        <!-- <div class="chat-list left" id="10">
-                            <div class="conversation-list">
-                                <div class="chat-avatar">
-                                    <img src="assets/images/users/avatar-2.jpg" alt="">
-                                </div>
-                                <div class="user-chat-content">
-                                    <div class="ctext-wrap">
-                                        <div class="message-img mb-0">
-                                            <div class="message-img-list">
-                                                <div>
-                                                    <iframe src="https://www.youtube.com/embed/PHcgN1GTjdU" title="YouTube video"
-                                                        class="w-100 rounded" autoplay allowfullscreen></iframe>
-                                                </div>
-
-                                                <div class="message-img-link">
-                                                    <ul class="list-inline mb-0">
-                                                        <li class="list-inline-item dropdown">
-                                                            <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                                                                aria-haspopup="true" aria-expanded="false">
-                                                                <i class="bx bx-dots-horizontal-rounded"></i>
-                                                            </a>
-                                                            <div class="dropdown-menu">
-                                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                                    href="assets/images/small/img-1.jpg" download="">
-                                                                    Download <i class="bx bx-download ms-2 text-muted"></i>
-                                                                </a>
-                                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                                    href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">
-                                                                    Reply <i class="bx bx-share ms-2 text-muted"></i>
-                                                                </a>
-                                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                                    href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">
-                                                                    Forward <i class="bx bx-share-alt ms-2 text-muted"></i>
-                                                                </a>
-                                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                                    href="#">
-                                                                    Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i>
-                                                                </a>
-                                                                <a class="dropdown-item d-flex align-items-center justify-content-between delete-image"
-                                                                    href="#">
-                                                                    Delete <i class="bx bx-trash ms-2 text-muted"></i>
-                                                                </a>
-                                                            </div>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="conversation-name">
-                                        <small class="text-muted time">11:45 am</small>
-                                        <span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="chat-list left" id="11">
-                            <div class="conversation-list">
-                                <div class="chat-avatar">
-                                    <img src="assets/images/users/avatar-2.jpg" alt="">
-                                </div>
-                                <div class="user-chat-content">
-                                    <div class="ctext-wrap">
-                                        <div class="message-img mb-0">
-                                            <div class="message-img-list">
-                                                <audio controls>
-                                                    <source src="http://w3codegenerator.com/audio/audio.mp3" type="audio/mpeg">
-                                                </audio>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="conversation-name">
-                                        <small class="text-muted time">11:45 am</small>
-                                        <span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> -->
                     </div>
 
                     <div class="alert alert-warning alert-dismissible copyclipboard-alert px-4 fade show" id="copyClipBoard"
@@ -1451,7 +1322,7 @@
 
                 <div class="p-3 border-bottom">
                     <div class="user-profile-img">
-                        <img src="assets/images/users/avatar-2.jpg" class="profile-img rounded" alt="">
+                        <img src="assets/images/users/user-dummy-img.jpg" class="profile-img rounded" id="show-user-profile" alt="">
                         <div class="overlay-content rounded">
                             <div class="user-chat-nav p-2">
                                 <div class="d-flex w-100">
@@ -1490,7 +1361,7 @@
                                 </div>
                             </div>
                             <div class="mt-auto p-3">
-                                <h5 class="user-name mb-0 text-truncate">Victoria Lane</h5>
+                                <h5 class="user-name mb-0 text-truncate">User</h5>
                                 <p class="fs-14 text-truncate user-profile-status mt-1 mb-0"><i class="bx bxs-circle fs-10 text-success me-1 ms-0"></i>
                                     Online</p>
                             </div>
@@ -1503,16 +1374,6 @@
                 <div class="p-4 user-profile-desc" data-simplebar>
                     <div class="text-center border-bottom border-bottom-dashed">
                         <div class="d-flex gap-2 justify-content-center mb-4">
-                            <button type="button" class="btn avatar-sm p-0">
-                                <span class="avatar-title rounded bg-soft-info text-info">
-                                    <i class="bx bxs-message-alt-detail"></i>
-                                </span>
-                            </button>
-                            <button type="button" class="btn avatar-sm p-0 favourite-btn">
-                                <span class="avatar-title rounded bg-soft-danger text-body">
-                                    <i class="bx bx-heart"></i>
-                                </span>
-                            </button>
                             <button type="button" class="btn avatar-sm p-0" data-bs-toggle="modal" data-bs-target=".audiocallModal">
                                 <span class="avatar-title rounded bg-soft-success text-success">
                                     <i class="bx bxs-phone-call"></i>
@@ -1544,7 +1405,7 @@
                     </div>
                     <div class="text-muted pt-4">
                         <h5 class="fs-12 text-muted text-uppercase">Status :</h5>
-                        <p class="mb-4">A professional profile is a brief summary of your skills, strengths, and key experiences.
+                        <p class="mb-4 status-text">A professional profile is a brief summary of your skills, strengths, and key experiences.
                         </p>
                     </div>
 
@@ -1555,7 +1416,7 @@
                                 <i class="ri-user-line align-middle fs-15 text-muted"></i>
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <h5 class="fs-14 text-truncate mb-0"> Victoria Lane</h5>
+                                <h5 class="fs-14 text-truncate mb-0"> N/A</h5>
                             </div>
                         </div>
 
@@ -1564,7 +1425,7 @@
                                 <i class="ri-mail-line align-middle fs-15 text-muted"></i>
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <h5 class="fs-14 text-truncate mb-0">bellacote@vhato.com</h5>
+                                <h5 class="fs-14 text-truncate mb-0">N/A</h5>
                             </div>
                         </div>
 
@@ -1573,7 +1434,7 @@
                                 <i class="ri-phone-line align-middle fs-15 text-muted"></i>
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <h5 class="fs-14 text-truncate mb-0">+(345) 3216 48751</h5>
+                                <h5 class="fs-14 text-truncate mb-0">N/A</h5>
                             </div>
                         </div>
 
@@ -1582,257 +1443,11 @@
                                 <i class="ri-mail-line align-middle fs-15 text-muted"></i>
                             </div>
                             <div class="flex-grow-1 ms-3">
-                                <h5 class="fs-14 text-truncate mb-0">California, USA</h5>
+                                <h5 class="fs-14 text-truncate mb-0">N/A</h5>
                             </div>
                         </div>
                     </div>
 
-                    <div class="pb-4 border-bottom border-bottom-dashed mb-4">
-                        <div class="d-flex">
-                            <div class="flex-grow-1">
-                                <h5 class="fs-12 text-muted text-uppercase">Group in common</h5>
-                            </div>
-                        </div>
-
-                        <ul class="list-unstyled chat-list mx-n4">
-                            <li>
-                                <a href="javascript: void(0);">
-                                    <div class="d-flex align-items-center">
-                                        <img src="assets/images/users/group-img.jpg" alt="" class="avatar-sm rounded-circle me-3">
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <h6 class="text-truncate mb-0">Landing Design</h6>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="javascript: void(0);">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 avatar-sm me-3">
-                                            <span class="avatar-title rounded-circle bg-light text-dark">
-                                                SM
-                                            </span>
-                                        </div>
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <h6 class="text-truncate mb-0">Sales & Marketing</h6>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="pb-4 border-bottom border-bottom-dashed mb-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="flex-grow-1">
-                                <h5 class="fs-12 text-muted text-uppercase mb-0">Shared Images</h5>
-                            </div>
-                            <div class="flex-shrink-0">
-                                <a href="#" class="fs-12 fw-medium d-block">Show all</a>
-                            </div>
-                        </div>
-                        <div class="profile-media-img">
-                            <div class="row g-1">
-                                <div class="col-lg-4 col-6">
-                                    <a href="#">
-                                        <img src="assets/images/small/img-1.jpg" alt="media img" class="img-fluid rounded">
-                                    </a>
-                                </div>
-                                <div class="col-lg-4 col-6">
-                                    <a href="#">
-                                        <img src="assets/images/small/img-2.jpg" alt="media img" class="img-fluid rounded">
-                                    </a>
-                                </div>
-                                <div class="col-lg-4 col-6">
-                                    <a href="#">
-                                        <img src="assets/images/small/img-3.jpg" alt="media img" class="img-fluid rounded">
-                                    </a>
-                                </div>
-                                <div class="col-lg-4 col-6">
-                                    <a href="#">
-                                        <img src="assets/images/small/img-4.jpg" alt="media img" class="img-fluid rounded">
-                                    </a>
-                                </div>
-                                <div class="col-lg-4 col-6">
-                                    <a href="#">
-                                        <img src="assets/images/small/img-5.jpg" alt="media img" class="img-fluid rounded">
-                                    </a>
-                                </div>
-                                <div class="col-lg-4 col-6">
-                                    <div class="position-relative rounded overflow-hidden">
-                                        <a href="javascript:void(0);" class="d-block">
-                                            <img src="assets/images/small/img-6.jpg" alt="media img" class="img-fluid rounded">
-
-                                            <div class="bg-overlay"></div>
-                                            <div class="position-absolute top-50 start-50 text-white translate-middle fs-16">
-                                                +10
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div>
-                            <h5 class="fs-11 text-muted text-uppercase mb-3">Attached Files</h5>
-                        </div>
-
-                        <div>
-                            <div class="card mb-2 border border-dashed">
-                                <div class="card-body p-2">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 ms-1 me-3">
-                                            <img src="assets/images/pdf-file.png" alt="" class="avatar-xs">
-                                        </div>
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <h5 class="fs-14 text-truncate mb-1">design-phase-1-approved.pdf</h5>
-                                            <p class="text-muted fs-13 mb-0">12.5 MB</p>
-                                        </div>
-
-                                        <div class="flex-shrink-0 ms-3">
-                                            <div class="d-flex gap-2">
-                                                <div>
-                                                    <a href="#" class="text-muted px-1">
-                                                        <i class="bx bxs-download"></i>
-                                                    </a>
-                                                </div>
-                                                <div class="dropdown">
-                                                    <a class="dropdown-toggle text-muted px-1" href="#" role="button"
-                                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="bx bx-dots-horizontal-rounded"></i>
-                                                    </a>
-                                                    <div class="dropdown-menu dropdown-menu-end">
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                            href="#">Share <i class="bx bx-share-alt ms-2 text-muted"></i></a>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                            href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>
-                                                        <div class="dropdown-divider"></div>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                            href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card border border-dashed mb-2">
-                                <div class="card-body p-2">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 ms-1 me-3">
-                                            <img src="assets/images/image-file.png" alt="" class="avatar-xs">
-                                        </div>
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <h5 class="fs-14 text-truncate mb-1">Image-1.jpg</h5>
-                                            <p class="text-muted fs-13 mb-0">4.2 MB</p>
-                                        </div>
-
-                                        <div class="flex-shrink-0 ms-3">
-                                            <div class="d-flex gap-2">
-                                                <div>
-                                                    <a href="#" class="text-muted px-1">
-                                                        <i class="bx bxs-download"></i>
-                                                    </a>
-                                                </div>
-                                                <div class="dropdown">
-                                                    <a class="dropdown-toggle text-muted px-1" href="#" role="button"
-                                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="bx bx-dots-horizontal-rounded"></i>
-                                                    </a>
-                                                    <div class="dropdown-menu dropdown-menu-end">
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                            href="#">Share <i class="bx bx-share-alt ms-2 text-muted"></i></a>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                            href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>
-                                                        <div class="dropdown-divider"></div>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                            href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card p-2 border border-dashed mb-2">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 ms-1 me-3">
-                                        <img src="assets/images/image-file.png" alt="" class="avatar-xs">
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <h5 class="fs-14 text-truncate mb-1">Image-2.jpg</h5>
-                                        <p class="text-muted fs-13 mb-0">3.1 MB</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 ms-3">
-                                        <div class="d-flex gap-2">
-                                            <div>
-                                                <a href="#" class="text-muted px-1">
-                                                    <i class="bx bxs-download"></i>
-                                                </a>
-                                            </div>
-                                            <div class="dropdown">
-                                                <a class="dropdown-toggle text-muted px-1" href="#" role="button"
-                                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="bx bx-dots-horizontal-rounded"></i>
-                                                </a>
-                                                <div class="dropdown-menu dropdown-menu-end">
-                                                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                        href="#">Share <i class="bx bx-share-alt ms-2 text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                        href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>
-                                                    <div class="dropdown-divider"></div>
-                                                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                        href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card p-2 border border-dashed mb-0">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 ms-1 me-3">
-                                        <img src="assets/images/zip-file.png" alt="" class="avatar-xs">
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <h5 class="fs-14 text-truncate mb-1">Landing-A.zip</h5>
-                                        <p class="text-muted fs-13 mb-0">6.7 MB</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 ms-3">
-                                        <div class="d-flex gap-2">
-                                            <div>
-                                                <a href="#" class="text-muted px-1">
-                                                    <i class="bx bxs-download"></i>
-                                                </a>
-                                            </div>
-                                            <div class="dropdown">
-                                                <a class="dropdown-toggle text-muted px-1" href="#" role="button"
-                                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="bx bx-dots-horizontal-rounded"></i>
-                                                </a>
-                                                <div class="dropdown-menu dropdown-menu-end">
-                                                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                        href="#">Share <i class="bx bx-share-alt ms-2 text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                        href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>
-                                                    <div class="dropdown-divider"></div>
-                                                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                        href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 <!-- end user-profile-desc -->
             </div>
@@ -1841,43 +1456,6 @@
         <!-- end user chat content -->
     </div>
     <!-- End User chat -->
-
-    <!-- Start Add contact Modal -->
-    <div class="modal fade" id="addContact-exampleModal" tabindex="-1" role="dialog"
-        aria-labelledby="addContact-exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content modal-header-colored shadow-lg border-0">
-                <div class="modal-header">
-                    <h5 class="modal-title text-white fs-16" id="addContact-exampleModalLabel">Create Contact</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <form>
-                        <div class="mb-3">
-                            <label for="addcontactemail-input" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="addcontactemail-input"
-                                placeholder="Enter Email">
-                        </div>
-                        <div class="mb-3">
-                            <label for="addcontactname-input" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="addcontactname-input" placeholder="Enter Name">
-                        </div>
-                        <div class="mb-0">
-                            <label for="addcontact-invitemessage-input" class="form-label">Invatation Message</label>
-                            <textarea class="form-control" id="addcontact-invitemessage-input" rows="3"
-                                placeholder="Enter Message"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-link" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Invite</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- End Add contact Modal -->
 
     <!-- audiocall Modal -->
     <div class="modal fade audiocallModal" tabindex="-1" aria-hidden="true">
@@ -2002,566 +1580,7 @@
     </div>
     <!-- end modal -->
 
-    <!-- groupvideocall Modal -->
-    <div class="modal fade groupvideocallModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0">
-                <div class="modal-body p-0 overflow-hidden">
-                    <div class="videocall-overlay"></div>
-                    <div class="video-call-title position-absolute top-0 start-0 mt-3 ms-3">
-                        <h5 class="user-profile-show fs-22 text-truncate text-white">Reporting</h5>
-                        <span class="badge text-white fs-11">05:27</span>
-                    </div>
-                    <img src="assets/images/users/avatar-7.jpg" alt="" class="videocallModal-bg rounded" />
-                    <ul class="list-unstyled groud-call-user vstack gap-3 position-absolute end-0 top-0 p-3">
-                        <li>
-                            <a href="javascript:void(0);"><img src="assets/images/users/avatar-11.jpg" alt=""
-                                    class="avatar-lg rounded"></a>
-                        </li>
-                        <li>
-                            <a href="javascript:void(0);"><img src="assets/images/users/avatar-6.jpg" alt=""
-                                    class="avatar-lg rounded" /></a>
-                        </li>
-                        <li>
-                            <a href="javascript:void(0);"><img src="assets/images/users/avatar-3.jpg" alt=""
-                                    class="avatar-lg rounded" /></a>
-                        </li>
-                    </ul>
-                    <div class="position-absolute video-call-menu start-0 end-0 bottom-0 mb-3">
-                        <div class="hstack justify-content-center gap-3">
-                            <a href="javascript:void(0);" class="btn btn-light avatar-sm rounded-circle">
-                                <span class="avatar-title bg-transparent fs-20">
-                                    <i class="bx bx-microphone-off"></i>
-                                </span>
-                            </a>
-                            <a href="javascript:void(0);" class="btn btn-light avatar-sm rounded-circle me-4">
-                                <span class="avatar-title bg-transparent fs-20">
-                                    <i class="bx bx-video-off"></i>
-                                </span>
-                            </a>
-                            <button type="button"
-                                class="btn btn-danger avatar-sm call-close-btn shadow-none rounded-circle"
-                                data-bs-dismiss="modal">
-                                <span class="avatar-title bg-transparent fs-24">
-                                    <i class="mdi mdi-phone-hangup"></i>
-                                </span>
-                            </button>
-                            <a href="javascript:void(0);" class="btn btn-light avatar-sm rounded-circle ms-4">
-                                <span class="avatar-title bg-transparent fs-20">
-                                    <i class="bx bx-volume-full"></i>
-                                </span>
-                            </a>
-                            <a href="javascript:void(0);" class="btn btn-light avatar-sm rounded-circle">
-                                <span class="avatar-title bg-transparent fs-20">
-                                    <i class="bx bx-refresh"></i>
-                                </span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- end modal -->
 
-    <!-- Start add group Modal -->
-    <div class="modal fade" id="addgroup-exampleModal" tabindex="-1" role="dialog"
-        aria-labelledby="addgroup-exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content modal-header-colored border-0">
-                <div class="modal-header">
-                    <h5 class="modal-title text-white fs-16" id="addgroup-exampleModalLabel">Create New Group</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close">
-                    </button>
-                </div>
-                <div class="modal-body p-4">
-                    <form>
-                        <div class="mb-4">
-                            <label for="addgroupname-input" class="form-label">Group Name</label>
-                            <input type="text" class="form-control" id="addgroupname-input"
-                                placeholder="Enter Group Name">
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label">Group Members</label>
-                            <div class="mb-3">
-                                <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#groupmembercollapse" aria-expanded="false"
-                                    aria-controls="groupmembercollapse">
-                                    Select Members
-                                </button>
-                            </div>
-
-                            <div class="collapse" id="groupmembercollapse">
-                                <div class="card border">
-                                    <div class="card-header">
-                                        <h5 class="fs-15 mb-0">Contacts</h5>
-                                    </div>
-                                    <div class="card-body py-2 px-0">
-                                        <div data-simplebar style="max-height: 180px;">
-                                            <div>
-                                                <div class="contact-list-title">
-                                                    A
-                                                </div>
-
-                                                <ul class="list-unstyled contact-list">
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck1" checked>
-                                                            <label class="form-check-label" for="memberCheck1">Albert
-                                                                Rodarte</label>
-                                                        </div>
-                                                    </li>
-
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck2">
-                                                            <label class="form-check-label" for="memberCheck2">Allison
-                                                                Etter</label>
-                                                        </div>
-                                                    </li>
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <div class="contact-list-title">
-                                                    C
-                                                </div>
-
-                                                <ul class="list-unstyled contact-list">
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck3">
-                                                            <label class="form-check-label" for="memberCheck3">Craig
-                                                                Smiley</label>
-                                                        </div>
-                                                    </li>
-
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <div class="contact-list-title">
-                                                    D
-                                                </div>
-
-                                                <ul class="list-unstyled contact-list">
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck4">
-                                                            <label class="form-check-label" for="memberCheck4">Daniel
-                                                                Clay</label>
-                                                        </div>
-                                                    </li>
-
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <div class="contact-list-title">
-                                                    I
-                                                </div>
-
-                                                <ul class="list-unstyled contact-list">
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck5">
-                                                            <label class="form-check-label" for="memberCheck5">Iris
-                                                                Wells</label>
-                                                        </div>
-                                                    </li>
-
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <div class="contact-list-title">
-                                                    J
-                                                </div>
-
-                                                <ul class="list-unstyled contact-list">
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck6">
-                                                            <label class="form-check-label" for="memberCheck6">Juan
-                                                                Flakes</label>
-                                                        </div>
-                                                    </li>
-
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck7">
-                                                            <label class="form-check-label" for="memberCheck7">John
-                                                                Hall</label>
-                                                        </div>
-                                                    </li>
-
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck8">
-                                                            <label class="form-check-label" for="memberCheck8">Joy
-                                                                Southern</label>
-                                                        </div>
-                                                    </li>
-
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <div class="contact-list-title">
-                                                    M
-                                                </div>
-
-                                                <ul class="list-unstyled contact-list">
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck9">
-                                                            <label class="form-check-label" for="memberCheck9">Michael
-                                                                Hinton</label>
-                                                        </div>
-                                                    </li>
-
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck10">
-                                                            <label class="form-check-label" for="memberCheck10">Mary
-                                                                Farmer</label>
-                                                        </div>
-                                                    </li>
-
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <div class="contact-list-title">
-                                                    P
-                                                </div>
-
-                                                <ul class="list-unstyled contact-list">
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck11">
-                                                            <label class="form-check-label" for="memberCheck11">Phillis
-                                                                Griffin</label>
-                                                        </div>
-                                                    </li>
-
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <div class="contact-list-title">
-                                                    R
-                                                </div>
-
-                                                <ul class="list-unstyled contact-list">
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck12">
-                                                            <label class="form-check-label" for="memberCheck12">Rocky
-                                                                Jackson</label>
-                                                        </div>
-                                                    </li>
-
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <div class="contact-list-title">
-                                                    S
-                                                </div>
-
-                                                <ul class="list-unstyled contact-list">
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                id="memberCheck13">
-                                                            <label class="form-check-label" for="memberCheck13">Simon
-                                                                Velez</label>
-                                                        </div>
-                                                    </li>
-
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="addgroupdescription-input" class="form-label">Description</label>
-                            <textarea class="form-control" id="addgroupdescription-input" rows="3"
-                                placeholder="Enter Description"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer border-top-dashed">
-                    <button type="button" class="btn btn-link link-danger m-0" data-bs-dismiss="modal"><i
-                            class="ri-close-line"></i> Close</button>
-                    <button type="button" class="btn btn-primary m-0">Create Groups</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- End add group Modal -->
-
-    <!-- Start Add pinned tab Modal -->
-    <div class="modal fade pinnedtabModal" tabindex="-1" role="dialog" aria-labelledby="pinnedtabModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content modal-header-colored border-0">
-                <div class="modal-header">
-                    <h5 class="modal-title text-white fs-16" id="pinnedtabModalLabel">Bookmark</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close">
-                    </button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="flex-grow-1">
-                            <div>
-                                <h5 class="fs-16 mb-0">10 Pinned tabs</h5>
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <div>
-                                <button type="button" class="btn btn-sm btn-warning"><i
-                                        class="bx bx-plus align-middle"></i> Pin</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chat-bookmark-list mx-n4" data-simplebar style="max-height: 299px;">
-                        <ul class="list-unstyled chat-list">
-                            <li>
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 ms-1 me-3">
-                                        <img src="assets/images/pdf-file.png" alt="" class="avatar-xs">
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <h5 class="fs-14 text-truncate mb-1"><a href="#"
-                                                class="p-0">design-phase-1-approved.pdf</a></h5>
-                                        <p class="text-muted fs-13 mb-0">12.5 MB</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 ms-3">
-                                        <div class="dropdown">
-                                            <a class="dropdown-toggle fs-18 text-muted px-1" href="#" role="button"
-                                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="bx bx-dots-horizontal-rounded"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Open <i class="bx bx-folder-open ms-2 text-muted"></i></a>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Edit <i class="bx bx-pencil ms-2 text-muted"></i></a>
-                                                <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 ms-1 me-3">
-                                        <img src="assets/images/link-file.png" alt="" class="avatar-xs">
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <h5 class="fs-14 text-truncate mb-1"><a href="#" class="p-0">Bg Pattern</a></h5>
-                                        <p class="text-muted fs-13 mb-0">https://bgpattern.com/</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 ms-3">
-                                        <div class="dropdown">
-                                            <a class="dropdown-toggle fs-18 text-muted px-1" href="#" role="button"
-                                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="bx bx-dots-horizontal-rounded"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Open <i class="bx bx-folder-open ms-2 text-muted"></i></a>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Edit <i class="bx bx-pencil ms-2 text-muted"></i></a>
-                                                <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 ms-1 me-3">
-                                        <img src="assets/images/image-file.png" alt="" class="avatar-xs">
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <h5 class="fs-14 text-truncate mb-1"><a href="#" class="p-0">Image-001.jpg</a>
-                                        </h5>
-                                        <p class="text-muted fs-13 mb-0">4.2 MB</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 ms-3">
-                                        <div class="dropdown">
-                                            <a class="dropdown-toggle fs-18 text-muted px-1" href="#" role="button"
-                                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="bx bx-dots-horizontal-rounded"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Open <i class="bx bx-folder-open ms-2 text-muted"></i></a>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Edit <i class="bx bx-pencil ms-2 text-muted"></i></a>
-                                                <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 ms-1 me-3">
-                                        <img src="assets/images/link-file.png" alt="" class="avatar-xs">
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <h5 class="fs-14 text-truncate mb-1"><a href="#" class="p-0">Images</a></h5>
-                                        <p class="text-muted fs-13 mb-0">https://images123.com/</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 ms-3">
-                                        <div class="dropdown">
-                                            <a class="dropdown-toggle fs-18 text-muted px-1" href="#" role="button"
-                                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="bx bx-dots-horizontal-rounded"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Open <i class="bx bx-folder-open ms-2 text-muted"></i></a>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Edit <i class="bx bx-pencil ms-2 text-muted"></i></a>
-                                                <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 ms-1 me-3">
-                                        <img src="assets/images/link-file.png" alt="" class="avatar-xs">
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <h5 class="fs-14 text-truncate mb-1"><a href="#" class="p-0">Bg Gradient</a>
-                                        </h5>
-                                        <p class="text-muted fs-13 mb-0">https://bggradient.com/</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 ms-3">
-                                        <div class="dropdown">
-                                            <a class="dropdown-toggle fs-18 text-muted px-1" href="#" role="button"
-                                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="bx bx-dots-horizontal-rounded"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Open <i class="bx bx-folder-open ms-2 text-muted"></i></a>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Edit <i class="bx bx-pencil ms-2 text-muted"></i></a>
-                                                <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 ms-1 me-3">
-                                        <img src="assets/images/image-file.png" alt="" class="avatar-xs">
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <h5 class="fs-14 text-truncate mb-1"><a href="#" class="p-0">Image-012.jpg</a>
-                                        </h5>
-                                        <p class="text-muted fs-13 mb-0">3.1 MB</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 ms-3">
-                                        <div class="dropdown">
-                                            <a class="dropdown-toggle fs-18 text-muted px-1" href="#" role="button"
-                                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="bx bx-dots-horizontal-rounded"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Open <i class="bx bx-folder-open ms-2 text-muted"></i></a>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Edit <i class="bx bx-pencil ms-2 text-muted"></i></a>
-                                                <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 ms-1 me-3">
-                                        <img src="assets/images/zip-file.png" alt="" class="avatar-xs">
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <h5 class="fs-14 text-truncate mb-1"><a href="#" class="p-0">analytics
-                                                dashboard.zip</a></h5>
-                                        <p class="text-muted fs-13 mb-0">6.7 MB</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 ms-3">
-                                        <div class="dropdown">
-                                            <a class="dropdown-toggle fs-18 text-muted px-1" href="#" role="button"
-                                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                <i class="bx bx-dots-horizontal-rounded"></i>
-                                            </a>
-                                            <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Open <i class="bx bx-folder-open ms-2 text-muted"></i></a>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Edit <i class="bx bx-pencil ms-2 text-muted"></i></a>
-                                                <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                                    href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                        <div class="text-center">
-                            <a href="#pills-bookmark" class="link-success">View All <i
-                                    class="ri-arrow-right-line ms-2 align-bottom"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- End Add pinned tab Modal -->
 
     <!-- forward Modal -->
     <div class="modal fade forwardModal" tabindex="-1" role="dialog" aria-labelledby="forwardModalModalLabel"

@@ -1,8 +1,9 @@
-import { doc, getDoc, collection, query, getDocs, updateDoc, addDoc, orderBy, onSnapshot, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+import { doc, getDoc, collection, query, getDocs, updateDoc, addDoc, orderBy, onSnapshot, Timestamp, setDoc, startAt, endAt } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 import { ref as rlRef, onDisconnect, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-storage.js";
 import { database, db, auth, storage } from "./config.js";
+import { truncateText } from "./utils.js";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -44,6 +45,25 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Error listening to presence array:", error);
         });
     }
+
+    function logout() {
+        signOut(auth)
+            .then(() => {
+                console.log("User logged out successfully.");
+                // Redirect to the login page or another appropriate location
+                window.location.href = "/dist/auth-login.html"; // Change to your login page URL
+            })
+            .catch((error) => {
+                console.error("Error logging out:", error);
+            });
+    }
+    document.querySelector('#logout-btn').addEventListener("click", (e) => {
+        e.preventDefault()
+        localStorage.setItem('userId', '')
+        logout()
+    })
+
+
     // Function to handle file uploads
     async function uploadFile(file, storagePath) {
         const storageRef = ref(storage, storagePath);
@@ -121,6 +141,13 @@ document.addEventListener("DOMContentLoaded", () => {
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
+
+                    user.providerData.forEach((profile) => {
+                       localStorage.setItem('provider', profile.providerId)
+                    });
+
+                    
+
                     localStorage.setItem('userId', user.uid);
                     const userRef = rlRef(database, `presence/${user.uid}`);
 
@@ -138,6 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const userDoc = await getDoc(userDocRef);
 
                     let profileData = userDoc.exists() ? userDoc.data() : defaultProfileData;
+                    console.log({ profileData })
 
 
                     // Update the profile elements
@@ -152,6 +180,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.querySelector("#pi-email").value = profileData.email || '';
                     document.querySelector("#pi-phone").value = profileData.phone || '';
                     document.querySelector("#pi-location").value = profileData.location || '';
+                    document.querySelector("#pi-bio").value = profileData.bio || '';
+                    document.querySelector("#pi-designation").value = profileData.designation || '';
 
                     // Profile details section
                     const details = document.querySelector(".profile-desc");
@@ -166,6 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     console.error("Error fetching user data:", error);
                 }
             } else {
+                window.location.replace('/dist/auth-login.html')
                 console.log("No user is logged in");
             }
         });
@@ -173,6 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Fetch users from Firestore
     async function fetchUsers() {
         // Reference to the 'users' collection
+
+
         const usersRef = collection(db, "users");
 
         // Fetch all documents in the collection
@@ -185,24 +218,41 @@ document.addEventListener("DOMContentLoaded", () => {
         userList.innerHTML = "";
 
         // Iterate over user documents
-        userDocs.forEach((doc) => {
-            const user = doc.data();
+        userDocs.forEach((userDoc) => {
+            const user = userDoc.data();
             const userItem = document.createElement("li");
+            const currentUserId = localStorage.getItem('userId');
+            const chatId = (userDoc.id > currentUserId)
+                ? `${userDoc.id}+${currentUserId}`
+                : `${currentUserId}+${userDoc.id}`;
+
+
+            //last message
+            const currentChatDocRef = doc(db, "chats", chatId); // Reference to the Firestore document
+            let lastMessageText = ''
+
+            getDoc(currentChatDocRef).then(response => {
+                lastMessageText = truncateText(response.data()?.lastMessage?.text);
+            })
+                .catch(error => {
+                    console.log({ error })
+                })
+
+            // const lastMessageText = truncateText(lastMessage.data().lastMessage?.text);
 
             userItem.innerHTML = `
-        <a href="#"  data-id="${doc.id}">
-            <span class="chat-user-img offline" data-id="${doc.id}">
-                <img src="${user.profileImageUrl || 'https://via.placeholder.com/40'}" class="rounded-circle avatar-xs" alt="User Avatar">
+        <a href="#"  data-id="${userDoc.id}">
+            <span class="chat-user-img offline" data-id="${userDoc.id}">
+                <img src="${user.profileImageUrl || 'https://via.placeholder.com/40'}" class="rounded-circle avatar-xs" alt="">
                 <span class="user-status"></span>
             </span>
             <span class="chat-username">${user.username || 'Unknown User'}</span>
-            <span class="chat-user-message">${user.lastMessage || 'No message yet'}</span>
-        </a>
-    `;
+            <span class="chat-user-message">${lastMessageText}</span>
+        </a>`;
             userList.appendChild(userItem);
         });
-
         document.querySelectorAll('.chat-user-list a').forEach(item => {
+            console.log('clicked')
             item.addEventListener("click", (event) => {
                 event.preventDefault();
                 localStorage.setItem('chat', item.getAttribute('data-id'))
@@ -236,7 +286,39 @@ document.addEventListener("DOMContentLoaded", () => {
         return new Date(); // Fallback to current date
     }
 
-    function loadChatMessages() {
+    function formatDate(timestamp) {
+        // Convert the given timestamp into a valid JavaScript Date object
+        const date = getValidDate(timestamp);
+
+        // Get today's date and set its time to midnight
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to midnight to compare only the date
+
+        // Get the current date from the input timestamp and set its time to midnight
+        const inputDate = new Date(date);
+        inputDate.setHours(0, 0, 0, 0);
+
+        const isToday = today.getTime() === inputDate.getTime(); // Check if the input date is today
+
+        if (isToday) {
+            // If it's today's date, return the formatted time
+            return new Intl.DateTimeFormat("en-US", {
+                hour: "numeric",
+                minute: "numeric",
+                second: "numeric",
+                hour12: true,
+            }).format(date);
+        } else {
+            // If it's not today, return a short date format
+            return new Intl.DateTimeFormat("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+            }).format(date);
+        }
+    }
+
+    async function loadChatMessages() {
         const chatMessagesList = document.getElementById("chat-messages-list"); // The chat conversation list
         const currentUserId = localStorage.getItem("userId");
         const recipientId = localStorage.getItem("chat");
@@ -248,6 +330,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 : `${currentUserId}+${recipientId}`;
 
             // Query the 'messages' sub-collection, ordered by timestamp
+            const currentUserDocRef = doc(db, "users", currentUserId); // Reference to the Firestore document
+            const recipientUserDocRef = doc(db, "users", recipientId); // Reference to the Firestore document
+            const currentUserDoc = await getDoc(currentUserDocRef); // Fetch the user data
+            const recipientUserDoc = await getDoc(recipientUserDocRef); // Fetch the user data
             const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
             const messagesQuery = query(messagesCollectionRef, orderBy("timestamp"));
 
@@ -261,11 +347,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     const messageItem = document.createElement("li");
                     messageItem.className = `chat-list ${isSentByCurrentUser ? "right" : "left"}`;
-                    const validDate = getValidDate(message.timestamp);
+                    const validDate = formatDate(message.timestamp);
+                    if (message.text === 'Hello ali, how are you doing?')
+                        console.log({ sender: message.sender, recipientId, isSentByCurrentUser, dp: currentUserDoc.data()?.profileImageUrl })
                     const messageContent = `
                         <div class="conversation-list">
                             ${!isSentByCurrentUser ? `<div class="chat-avatar">
-                                <img src="${message.senderAvatar || 'https://via.placeholder.com/28'}" alt="User Avatar" class="rounded-circle">
+                                <img src="${recipientUserDoc.data()?.profileImageUrl || 'https://via.placeholder.com/28'}" alt="" class="rounded-circle">
                             </div>` : ""}
                             <div class="user-chat-content">
                                 <div class="ctext-wrap">
@@ -278,7 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                             </div>
                             ${isSentByCurrentUser ? `<div class="chat-avatar">
-                                <img src="${message.senderAvatar || 'https://via.placeholder.com/28'}" alt="User Avatar" class="rounded-circle">
+                                <img src="${currentUserDoc.data()?.profileImageUrl || 'https://via.placeholder.com/28'}" alt="" class="rounded-circle">
                             </div>` : ""}
                         </div>
                     `;
@@ -316,7 +404,9 @@ document.addEventListener("DOMContentLoaded", () => {
             username: document.querySelector("#pi-name").value,
             email: document.querySelector("#pi-email").value,
             phone: document.querySelector("#pi-phone").value,
-            location: document.querySelector("#pi-location").value
+            location: document.querySelector("#pi-location").value,
+            bio: document.querySelector("#pi-bio").value,
+            designation: document.querySelector("#pi-designation").value
         };
 
         const currentUser = auth.currentUser;
@@ -396,6 +486,9 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 // Reference to the 'messages' sub-collection within the chat document
                 const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
+
+                const chatDocRef = doc(db, `chats/${chatId}`);
+                await setDoc(chatDocRef, { lastMessage: message }, { merge: true });
 
                 // Add a new message to the 'messages' sub-collection
                 await addDoc(messagesCollectionRef, message);
@@ -564,9 +657,147 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     })
 
+    // Function to fetch user data from Firestore
+    async function fetchUserData(userId) {
+        const userRef = doc(db, "users", userId);
+        const userSnapshot = await getDoc(userRef);
+        if (userSnapshot.exists()) {
+            return userSnapshot.data();
+        } else {
+            console.error("User not found");
+            return null;
+        }
+    }
+
+    // Function to update the user profile detail sidebar
+    async function updateUserProfileSidebar(userId) {
+        const userData = await fetchUserData(userId);
+        if (!userData) return;
+        console.log({ userData })
+        // Update profile image
+        const profileImg = document.querySelector('#show-user-profile');
+        profileImg.src = userData.profileImageUrl || "assets/images/users/avatar-default.jpg";
+
+        // Update user name
+        const userName = document.querySelector('.user-name');
+        userName.textContent = userData.username || "Unknown User";
+
+        // Update user status
+        const userStatus = document.querySelector('.user-profile-status');
+        userStatus.innerHTML = `
+        <i class="bx bxs-circle fs-10 text-${userData.online ? 'success' : 'danger'} me-1 ms-0"></i>
+        ${userData.online ? 'Online' : 'Offline'}
+    `;
+
+        const statusText = document.querySelector('.status-text');
+        statusText.innerHTML = userData.bio || 'N/A';
+
+        // Update user profile description
+        const profileDesc = document.querySelector('.user-profile-desc');
+        const infoSection = profileDesc.querySelector('.pb-4.border-bottom');
+        infoSection.innerHTML = `
+        <h5 class="fs-12 text-muted text-uppercase mb-2">Info :</h5>
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+                <i class="ri-user-line align-middle fs-15 text-muted"></i>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <h5 class="fs-14 text-truncate mb-0">${userData.username || "Full Name"}</h5>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center mt-3">
+            <div class="flex-shrink-0">
+                <i class="ri-mail-line align-middle fs-15 text-muted"></i>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <h5 class="fs-14 text-truncate mb-0">${userData.email || "Email Address"}</h5>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center mt-3">
+            <div class="flex-shrink-0">
+                <i class="ri-phone-line align-middle fs-15 text-muted"></i>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <h5 class="fs-14 text-truncate mb-0">${userData.phone || "Phone Number"}</h5>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center mt-3">
+            <div class="flex-shrink-0">
+                <i class="ri-mail-line align-middle fs-15 text-muted"></i>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <h5 class="fs-14 text-truncate mb-0">${userData.address || "Address"}</h5>
+            </div>
+        </div>
+    `;
+    }
+
+
+    const showProfileBtn = document.querySelector('#show-profile');
+
+    showProfileBtn.addEventListener('click', () => {
+        console.log('clicked')
+        updateUserProfileSidebar(localStorage.getItem('chat'))
+    })
+
+    async function searchUsersByName(namePrefix) {
+        const usersRef = collection(db, "users");
+    
+        // Query for users where the username starts with the given prefix
+        const usersQuery = query(
+            usersRef,
+            orderBy("username"), // Order by the username field
+            startAt(namePrefix), // Start at the given name prefix
+            endAt(namePrefix + "\uf8ff") // End at the upper bound
+        );
+    
+        const userDocs = await getDocs(usersQuery);
+    
+        // Get the list where you want to append users
+        const userList = document.getElementById("favourite-users");
+    
+        // Clear the current list
+        userList.innerHTML = ""; // Clear previous results
+    
+        // Process the query results
+        userDocs.docs.forEach((doc) => {
+            const userDoc = doc.data();
+            const userItem = document.createElement("li"); // Create a new list item
+            userItem.innerHTML = `
+            <a href="#" data-id="${doc.id}">
+                <span class="chat-user-img offline">
+                    <img src="${userDoc.profileImageUrl || 'https://via.placeholder.com/40'}" class="rounded-circle avatar-xs" alt="">
+                    <span class="user-status"></span>
+                </span>
+                <span class="chat-username">${userDoc.username || 'Unknown User'}</span>
+            </a>`;
+    
+            // Append the new item to the list
+            userList.appendChild(userItem);
+        });
+    }
+    
+
+    document.querySelector('#searchChatUser').addEventListener('keyup', (e) => {
+        searchUsersByName(e.target.value)
+    })
+
+
+
     fetchUsers()
     updateProfile();
     loadChatUser();
     loadChatMessages();
     listenForTypingState();
+    const provider = localStorage.getItem('provider')
+    if (provider === 'password') {
+        alert('iff')
+        document.querySelector('#change-password-link').style.display = 'block'
+    } else {
+        alert('elsee')
+        document.querySelector('#change-password-link').style.display = 'none'
+    }
 });
