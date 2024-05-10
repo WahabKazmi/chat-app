@@ -1,4 +1,4 @@
-import { getFirestore, collection, query, where, orderBy, getDocs, getDoc, doc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+import { getFirestore, collection, query, where, orderBy, getDocs, getDoc, doc, onSnapshot, Timestamp, updateDoc, arrayUnion   } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 import { ref as rlRef, onDisconnect, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 import { database, db, auth, storage } from "./config.js";
 
@@ -147,6 +147,46 @@ async function loadChatUser() {
     }
 }
 
+// Function to add a reaction to a message
+async function addReactionToMessage(messageId, reactionEmoji) {
+    const recipientId = localStorage.getItem('chat')
+    const chatId = (recipientId > currentUserId)
+            ? `${recipientId}+${currentUserId}`
+            : `${currentUserId}+${recipientId}`;
+    try {
+        const messageDocRef = doc(db, `chats/${chatId}/messages/${messageId}`);
+
+        // Update the 'reactions' array by adding a new reaction
+        await updateDoc(messageDocRef, {
+            reactions: arrayUnion({
+                userId: localStorage.getItem("userId"), // Current logged-in user ID
+                emoji: reactionEmoji, // The reaction emoji
+                timestamp: new Date() // Time of reaction
+            })
+        });
+
+        console.log(`Reaction '${reactionEmoji}' added to message: ${messageId}`);
+    } catch (error) {
+        console.error("Error adding reaction:", error);
+    }
+}
+
+// Event delegation for dynamically rendered elements
+document.addEventListener("click", async (event) => {
+    const target = event.target;
+
+    // Check if the clicked element is part of the reaction bar
+    if (target.closest(".hstack")) {
+        const emojiElement = target.closest("a"); // The clicked emoji
+        if (emojiElement) {
+            const reactionEmoji = emojiElement.textContent.trim(); // Get the reaction emoji
+            const messageId = emojiElement.getAttribute('data-id'); // Replace with the correct message ID
+
+            await addReactionToMessage(messageId, reactionEmoji); // Add the reaction to the message
+        }
+    }
+});
+
 async function loadChatMessages() {
     const chatMessagesList = document.getElementById("chat-messages-list"); // The chat conversation list
     const currentUserId = localStorage.getItem("userId");
@@ -264,15 +304,26 @@ async function loadChatMessages() {
                                     ` : ''}
 
                                 </div>
-                                <div class="emoji-icon"> <a class="dropdown-toggle" href="#">👍</a> </div>
+                                ${message?.reactions?.length ? `
+                                <div class="emoji-icon">
+                                        ${message?.reactions?.map(item => {
+                                            return `
+                                            <a class="dropdown-toggle" href="#">${item.emoji}</a>
+                                            `
+                                        })}
+                                </div>
+                                ` : ''}
                                 <div class="align-self-start message-box-drop d-flex">
                                     <div class="dropdown"> <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                                             aria-haspopup="true" aria-expanded="false"> <i class="ri-emotion-happy-line"></i>
                                         </a>
                                         <div class="dropdown-menu emoji-dropdown-menu">
-                                            <div class="hstack align-items-center gap-2 px-2 fs-25"> <a href="javascript:void(0);">💛</a> <a
-                                                    href="javascript:void(0);">🤣</a> <a href="javascript:void(0);">😜</a> <a
-                                                    href="javascript:void(0);">😘</a> <a href="javascript:void(0);">😍</a>
+                                            <div class="hstack align-items-center gap-2 px-2 fs-25">
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">💛</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">🤣</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">😜</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">😘</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">😍</a>
                                             </div>
                                         </div>
                                     </div>
