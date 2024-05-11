@@ -32,8 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
         signOut(auth)
             .then(() => {
                 console.log("User logged out successfully.");
-                // Redirect to the login page or another appropriate location
-                window.location.href = "/dist/auth-login.html"; // Change to your login page URL
+                redirection('auth-login.html')
             })
             .catch((error) => {
                 console.error("Error logging out:", error);
