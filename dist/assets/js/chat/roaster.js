@@ -1,4 +1,4 @@
-import { getFirestore, collection, query, where, orderBy, getDocs, getDoc, doc, onSnapshot, Timestamp, updateDoc, arrayUnion   } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+import { deleteDoc, collection, query, where, orderBy, getDocs, getDoc, doc, onSnapshot, Timestamp, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 import { ref as rlRef, onDisconnect, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 import { database, db, auth, storage } from "./config.js";
 
@@ -149,31 +149,60 @@ async function loadChatUser() {
 
 // Function to add a reaction to a message
 async function addReactionToMessage(messageId, reactionEmoji) {
-    const recipientId = localStorage.getItem('chat')
+    const recipientId = localStorage.getItem('chat');
+    const currentUserId = localStorage.getItem('userId');
     const chatId = (recipientId > currentUserId)
-            ? `${recipientId}+${currentUserId}`
-            : `${currentUserId}+${recipientId}`;
+        ? `${recipientId}+${currentUserId}`
+        : `${currentUserId}+${recipientId}`;
+
     try {
         const messageDocRef = doc(db, `chats/${chatId}/messages/${messageId}`);
+        const messageDocSnapshot = await getDoc(messageDocRef);
 
-        // Update the 'reactions' array by adding a new reaction
-        await updateDoc(messageDocRef, {
-            reactions: arrayUnion({
-                userId: localStorage.getItem("userId"), // Current logged-in user ID
-                emoji: reactionEmoji, // The reaction emoji
-                timestamp: new Date() // Time of reaction
-            })
-        });
+        if (messageDocSnapshot.exists()) {
+            const messageData = messageDocSnapshot.data();
+            const reactions = messageData.reactions || [];
 
-        console.log(`Reaction '${reactionEmoji}' added to message: ${messageId}`);
+            // Check if the user has already reacted to the message
+            const userReactionIndex = reactions.findIndex(item => item.userId === currentUserId);
+
+            // If the user has already reacted, update their existing reaction
+            if (userReactionIndex !== -1) {
+                reactions[userReactionIndex] = {
+                    userId: currentUserId,
+                    emoji: reactionEmoji,
+                    timestamp: new Date()
+                };
+            } else {
+                // If the user has not reacted, add a new reaction
+                reactions.push({
+                    userId: currentUserId,
+                    emoji: reactionEmoji,
+                    timestamp: new Date()
+                });
+            }
+
+            // Update the reactions array in the message document
+            await updateDoc(messageDocRef, { reactions });
+
+            console.log(`Reaction '${reactionEmoji}' added to message: ${messageId}`);
+        } else {
+            console.error(`Message ${messageId} does not exist in chat ${chatId}`);
+        }
     } catch (error) {
         console.error("Error adding reaction:", error);
     }
 }
 
+
 // Event delegation for dynamically rendered elements
 document.addEventListener("click", async (event) => {
     const target = event.target;
+    const userId = localStorage.getItem('userId');
+    const recipientId = localStorage.getItem('chat');
+    const chatId = (recipientId > currentUserId)
+        ? `${recipientId}+${currentUserId}`
+        : `${currentUserId}+${recipientId}`;
 
     // Check if the clicked element is part of the reaction bar
     if (target.closest(".hstack")) {
@@ -183,6 +212,48 @@ document.addEventListener("click", async (event) => {
             const messageId = emojiElement.getAttribute('data-id'); // Replace with the correct message ID
 
             await addReactionToMessage(messageId, reactionEmoji); // Add the reaction to the message
+        }
+    }
+
+
+
+    if (event.target.classList.contains('added-reactions')) {
+        const messageId = event.target.dataset.messageId;
+        const reactionEmoji = event.target.dataset.reactionEmoji;
+
+
+
+        try {
+            // Get the message document reference
+            const messageDocRef = doc(db, `chats/${chatId}/messages/${messageId}`);
+            const messageDoc = await getDoc(messageDocRef);
+
+            // Filter out the user's own reaction
+            const updatedReactions = messageDoc.data().reactions.filter(reaction => reaction.userId !== userId || reaction.emoji !== reactionEmoji);
+
+            // Update the reactions array in Firestore
+            await updateDoc(messageDocRef, { reactions: updatedReactions });
+        } catch (error) {
+            console.error("Error deleting reaction:", error);
+        }
+    }
+
+    if (event.target.classList.contains('delete-msg')) {
+        const messageId = event.target.dataset.messageId;
+
+        try {
+            // Get the reference to the message document
+            const messageDocRef = doc(db, `chats/${chatId}/messages/${messageId}`);
+            const message = await getDoc(messageDocRef);
+            console.log({ message: message.data() })
+            // Delete the message document from Firestore
+            if (message.data().sender === userId)
+                await deleteDoc(messageDocRef);
+            else
+                console.log('Cannot delete this message')
+
+        } catch (error) {
+            console.error("Error deleting message:", error);
         }
     }
 });
@@ -230,7 +301,7 @@ async function loadChatMessages() {
                                     ${message.type === 'files' ? `
                                     <div>
                                     ${message.files.map(item => {
-                                        return `
+                    return `
                                         <div class="p-3 border rounded-3">
                                             <div class="d-flex align-items-center attached-file">
                                                 <div class="flex-shrink-0 avatar-sm me-3 ms-0 attached-file-avatar">
@@ -253,25 +324,25 @@ async function loadChatMessages() {
                                             </div>
                                         </div>
                                         `
-                                    })}
+                })}
                                     </div>
                                     ` : ''}
                                     ${message.type === 'audio' ? `<audio src="${message.audioUrl}" controls/>` : ''}
-                                    ${message.type === 'audios' ? 
-                                    
-                                        message.audios.map(item => {
-                                            console.log('audios ===> ', message.audios.length)
-                                            return `
+                                    ${message.type === 'audios' ?
+
+                        message.audios.map(item => {
+                            console.log('audios ===> ', message.audios.length)
+                            return `
                                             <audio src="${item.fileUrl}" controls/>
                                             `
-                                        })
-                                    
-                                    : ''}
+                        })
+
+                        : ''}
                                     ${message.type !== 'audio' || message.type !== 'files' ? `<span class="ctext-content">${message?.text || ''}</span>` : ''}
                                     ${message.type === 'images' ? `
                                     <div class="message-img mb-0">
                                         ${message.images.map(item => {
-                                            return `
+                            return `
                                             <div class="message-img-list">
                                                 <div> <a class="popup-img d-inline-block" href="${item.fileUrl}"> <img
                                                             src="${item.fileUrl}" alt="" class="rounded border img-thumbnail"> </a> </div>
@@ -299,19 +370,20 @@ async function loadChatMessages() {
                                                 </div>
                                             </div>
                                             `;
-                                        })}
+                        })}
                                     </div>
                                     ` : ''}
 
                                 </div>
-                                ${message?.reactions?.length ? `
-                                <div class="emoji-icon">
-                                        ${message?.reactions?.map(item => {
-                                            return `
-                                            <a class="dropdown-toggle" href="#">${item.emoji}</a>
-                                            `
-                                        })}
-                                </div>
+                                    ${message?.reactions?.length ? `
+                                    <div class="emoji-icon">
+                                            ${message?.reactions?.map(item => {
+                            console.log({ item, message, id: doc.id })
+                            return `
+                                                <a class="dropdown-toggle added-reactions" href="javascript:void;" data-user-id="${item.userId}"  data-reaction-emoji="${item.emoji}"  data-message-id="${doc.id}">${item.emoji}</a>
+                                                `
+                        })}
+                                    </div>
                                 ` : ''}
                                 <div class="align-self-start message-box-drop d-flex">
                                     <div class="dropdown"> <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
@@ -334,9 +406,12 @@ async function loadChatMessages() {
                                                 class="dropdown-item d-flex align-items-center justify-content-between" href="#"
                                                 data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i
                                                     class="bx bx-share-alt ms-2 text-muted"></i></a>
+                                                    ${message.sender !== localStorage.getItem('chat') ? `
                                                     <a
-                                                class="dropdown-item d-flex align-items-center justify-content-between delete-item"
-                                                href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a> </div>
+                                                class="dropdown-item d-flex align-items-center justify-content-between delete-item delete-msg"
+                                                data-message-id="${doc.id}"
+                                                href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a> 
+                                                    ` : ''}</div>
                                     </div>
                                 </div>
                             </div>
