@@ -497,7 +497,6 @@ export async function getChatsForUser() {
 
 }
 
-getChatsForUser();
 
 
 // Function to search chats by recipient username
@@ -571,5 +570,7 @@ searchInput.addEventListener("input", function (event) {
     }
 });
 
+
+getChatsForUser();
 
 export {loadChatUser, loadChatMessages }

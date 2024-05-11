@@ -61,8 +61,34 @@
             color: gray;
             margin-left: 4px;
         }
+
         .conversation-list .emoji-icon a {
             z-index: 1;
+        }
+
+        @media (max-width: 991.98px) {
+            .user-chat-topbar {
+                position: fixed;
+                background-color: var(--bs-card-bg) !important;
+            }
+        }
+
+        @media (hover: none) {
+
+            /* Add your CSS styles for touch screens here */
+            .chat-conversation .chat-list:hover .message-box-drop {
+                visibility: visible;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .chat-conversation .conversation-list .dropdown .dropdown-toggle {
+                display: block !important;
+            }
+
+            .chat-conversation .chat-list .message-box-drop {
+                visibility: visible;
+            }
         }
     </style>
 </head>
@@ -125,28 +151,28 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown profile-user-dropdown">
-                    <a class="nav-link dropdown-toggle bg-light" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle bg-light" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
 
-                        <img src="assets/images/users/user-dummy-img.jpg" alt="" class="profile-user rounded-circle user-profile-img">
-                    </a>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" id="pills-user-tab"
-                            data-bs-toggle="pill" href="#pills-user" role="tab">Profile <i
-                                class="bx bx-user-circle text-muted ms-1"></i></a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" id="pills-setting-tab"
-                            data-bs-toggle="pill" href="#pills-setting" role="tab">Setting <i
-                                class="bx bx-cog text-muted ms-1"></i></a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between change-password-link"
-                            href="auth-changepassword.html">Change Password <i
-                                class="bx bx-lock-open text-muted ms-1"></i></a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        style="cursor: pointer;"
-                            id="logout-btn"
-                            >Log out <i class="bx bx-log-out-circle text-muted ms-1"></i></a>
-                    </div>
-                </li>
+                            <img src="assets/images/users/user-dummy-img.jpg" alt=""
+                                class="profile-user rounded-circle user-profile-img">
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                                id="pills-user-tab" data-bs-toggle="pill" href="#pills-user" role="tab">Profile <i
+                                    class="bx bx-user-circle text-muted ms-1"></i></a>
+                            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                                id="pills-setting-tab" data-bs-toggle="pill" href="#pills-setting" role="tab">Setting <i
+                                    class="bx bx-cog text-muted ms-1"></i></a>
+                            <a class="dropdown-item d-flex align-items-center justify-content-between change-password-link"
+                                href="auth-changepassword.html" id="change-password-link">Change Password <i
+                                    class="bx bx-lock-open text-muted ms-1"></i></a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                                style="cursor: pointer;" id="logout-btn">Log out <i
+                                    class="bx bx-log-out-circle text-muted ms-1"></i></a>
+                        </div>
+                    </li>
                 </ul>
             </div>
             <!-- end side-menu nav -->
@@ -1073,7 +1099,8 @@
                                                 </button>
                                                 <div class="dropdown-menu dropdown-menu-end">
                                                     <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none user-profile-show"
-                                                        href="#">View Profile <i class="bx bx-user text-muted"></i></a>
+                                                        href="#" id="show-user-profile-mobile">View Profile <i
+                                                            class="bx bx-user text-muted"></i></a>
                                                     <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none"
                                                         href="#" data-bs-toggle="modal"
                                                         data-bs-target=".audiocallModal">Audio <i
@@ -1103,7 +1130,7 @@
 
                         <div class="chat-conversation p-3 p-lg-4 " id="chat-conversation" data-simplebar>
                             <ul class="list-unstyled chat-conversation-list" id="chat-messages-list">
-                                
+
                             </ul>
                         </div>
 
@@ -1239,7 +1266,7 @@
                                                     <i class="bx bx-dots-horizontal-rounded align-middle"></i>
                                                 </button>
                                             </div>
-                                           
+
                                         </div>
                                     </div>
                                     <div class="col">

@@ -4,7 +4,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-storage.js";
 import { database, db, auth, storage } from "./config.js";
 import { truncateText } from "./utils.js";
-import { getChatsForUser, loadChatUser, loadChatMessages  } from "./roaster.js";
+import { getChatsForUser, loadChatUser, loadChatMessages } from "./roaster.js";
 import { redirection } from "../custom-script.js";
 
 
@@ -116,24 +116,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const chatId = (recipientId > currentUserId)
             ? `${recipientId}+${currentUserId}`
             : `${currentUserId}+${recipientId}`;
-    
+
         // Check if there are files
         if (!files || files.length === 0) {
             console.error("No files selected.");
             return;
         }
-    
+
         // Upload each image to Firebase Storage
         for (const file of files) {
             if (!file.type.startsWith("image/")) {
                 console.error("Not an image file:", file.name);
                 continue; // Skip non-image files
             }
-    
+
             const fileRef = ref(storage, `images/${chatId}/${file.name}`); // Define storage path for images
             await uploadBytes(fileRef, file); // Upload the image
             const downloadURL = await getDownloadURL(fileRef); // Get the download URL
-    
+
             // Store image details in an array
             imageArray.push({
                 fileName: file.name,
@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 fileSize: file.size,
             });
         }
-    
+
         // Create a message with the image array
         const message = {
             type: 'images',
@@ -150,12 +150,12 @@ document.addEventListener("DOMContentLoaded", () => {
             timestamp: new Date(),
             images: imageArray, // Array with image details
         };
-    
+
         try {
             // Add the message to the 'messages' sub-collection
             const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
             await addDoc(messagesCollectionRef, message);
-    
+
             console.log("Images uploaded and message sent:", imageArray);
         } catch (error) {
             console.error("Error sending message with images:", error);
@@ -171,24 +171,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const chatId = (recipientId > currentUserId)
             ? `${recipientId}+${currentUserId}`
             : `${currentUserId}+${recipientId}`;
-    
+
         // Check if files are selected
         if (!files || files.length === 0) {
             console.error("No files selected.");
             return;
         }
-    
+
         // Upload each audio file to Firebase Storage
         for (const file of files) {
             if (!file.type.startsWith("audio/")) {
                 console.error("Not an audio file:", file.name);
                 continue; // Skip non-audio files
             }
-    
+
             const fileRef = ref(storage, `audio/${chatId}/${file.name}`); // Define storage path for audio files
             await uploadBytes(fileRef, file); // Upload the audio file
             const downloadURL = await getDownloadURL(fileRef); // Get the download URL
-    
+
             // Store audio file details in an array
             audioArray.push({
                 fileName: file.name,
@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 fileSize: file.size,
             });
         }
-    
+
         // Create a message with the audio array
         const message = {
             type: 'audios',
@@ -205,12 +205,12 @@ document.addEventListener("DOMContentLoaded", () => {
             timestamp: new Date(),
             audios: audioArray, // Array with audio details
         };
-    
+
         try {
             // Add the message to the 'messages' sub-collection
             const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
             await addDoc(messagesCollectionRef, message);
-    
+
             console.log("Audio files uploaded and message sent:", audioArray);
         } catch (error) {
             console.error("Error sending message with audio files:", error);
@@ -724,10 +724,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     const showProfileBtn = document.querySelector('#show-profile');
+    const showProfileMobileBtn = document.querySelector('#show-user-profile-mobile');
 
-    showProfileBtn.addEventListener('click', () => {
-        updateUserProfileSidebar(localStorage.getItem('chat'))
-    })
+    showProfileBtn.addEventListener('click', () =>
+        updateUserProfileSidebar(localStorage.getItem('chat')))
+    showProfileMobileBtn.addEventListener('click', () =>
+        updateUserProfileSidebar(localStorage.getItem('chat')))
 
 
 
