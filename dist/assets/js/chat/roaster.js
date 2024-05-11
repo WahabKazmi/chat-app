@@ -21,12 +21,8 @@ function listenToPresence() {
                 lastOnline: status.lastOnline || null,
             }));
 
-            console.log('usrs ===>', users)
-
-
             users.forEach(user => {
                 document.querySelectorAll('.chat-message-list li .chat-user-img').forEach(item => {
-                    console.log('inside loop')
                     if (item.getAttribute('data-id') === user.userId) {
                         if (user.isOnline) {
                             item.classList.remove('offline')
@@ -391,11 +387,12 @@ async function loadChatMessages() {
                                         </a>
                                         <div class="dropdown-menu emoji-dropdown-menu">
                                             <div class="hstack align-items-center gap-2 px-2 fs-25">
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">💛</a>
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">🤣</a>
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">😜</a>
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">😘</a>
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">😍</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">👍</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">❤️</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">😆</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">😮</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">😢</a>
+                                                    <a href="javascript:void(0);" data-id="${doc.id}">😡</a>
                                             </div>
                                         </div>
                                     </div>
@@ -498,6 +495,7 @@ export async function getChatsForUser() {
     listenToPresence()
 
 }
+
 getChatsForUser();
 
 
@@ -568,3 +566,6 @@ searchInput.addEventListener("input", function (event) {
         getChatsForUser(); // If search value is empty, retrieve all chats
     }
 });
+
+
+export {loadChatUser, loadChatMessages }

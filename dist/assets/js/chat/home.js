@@ -4,11 +4,12 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-storage.js";
 import { database, db, auth, storage } from "./config.js";
 import { truncateText } from "./utils.js";
-import { getChatsForUser } from "./roaster.js";
+import { getChatsForUser, loadChatUser, loadChatMessages  } from "./roaster.js";
 
 
 document.addEventListener("DOMContentLoaded", () => {
-
+    loadChatUser();
+    loadChatMessages();
     function setDarkModeAccordingToSystemPreference() {
         const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const currentMode = document.body.getAttribute("data-layout-mode");
@@ -300,8 +301,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     const userDoc = await getDoc(userDocRef);
 
                     let profileData = userDoc.exists() ? userDoc.data() : defaultProfileData;
-                    console.log({ profileData })
-
 
                     // Update the profile elements
                     document.querySelectorAll('.profile-foreground-img').forEach(item => item.src = profileData.foregroundImageUrl || "assets/images/4902908.jpg")
@@ -378,7 +377,7 @@ document.addEventListener("DOMContentLoaded", () => {
             userItem.innerHTML = `
         <a href="#"  data-id="${userDoc.id}">
             <span class="chat-user-img offline" data-id="${userDoc.id}">
-                <img src="${user.profileImageUrl || 'https://via.placeholder.com/40'}" class="rounded-circle avatar-xs" alt="">
+                <img src="${user.profileImageUrl || 'assets/images/users/user-dummy-img.jpg'}" class="rounded-circle avatar-xs" alt="">
             </span>
             <span class="chat-username">${user.username || 'Unknown User'}</span>
             <span class="chat-user-message">${lastMessageText}</span>
@@ -386,7 +385,6 @@ document.addEventListener("DOMContentLoaded", () => {
             userList.appendChild(userItem);
         });
         document.querySelectorAll('.chat-user-list a').forEach(item => {
-            console.log('clicked')
             item.addEventListener("click", (event) => {
                 event.preventDefault();
                 localStorage.setItem('chat', item.getAttribute('data-id'))
@@ -727,7 +725,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const showProfileBtn = document.querySelector('#show-profile');
 
     showProfileBtn.addEventListener('click', () => {
-        console.log('clicked')
         updateUserProfileSidebar(localStorage.getItem('chat'))
     })
 
