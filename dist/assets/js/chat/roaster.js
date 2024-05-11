@@ -489,6 +489,7 @@ export async function getChatsForUser() {
             localStorage.setItem('chat', item.getAttribute('data-id'))
             loadChatUser();
             loadChatMessages();
+            document.querySelector('.user-chat').classList.add('user-chat-show');
         })
     })
 
@@ -545,6 +546,9 @@ async function searchChatsByUsername(username) {
                 localStorage.setItem('chat', item.getAttribute('data-id'))
                 loadChatUser();
                 loadChatMessages();
+
+                document.querySelector('.user-chat').classList.add('user-chat-show');
+                // user-chat-show
             })
         })
         listenToPresence()

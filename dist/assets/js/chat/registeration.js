@@ -1,6 +1,7 @@
 import { createUserWithEmailAndPassword, signInWithPopup  } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 import { setDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 import { auth, db } from "./config.js";
+import { redirection } from "../custom-script.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -28,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.log("User registered and data stored in Firestore:", user);
 
                 // You can redirect or show a success message
-                window.location.replace('/dist/')
+                redirection('')
 
             } catch (error) {
                 console.error("Error during registration:", error);
@@ -59,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       await setDoc(userDocRef, userData, { merge: true }); // Save or update user data in Firestore
 
       console.log("User signed in with Google and data stored in Firestore:", user);
-      window.location.replace('/dist/')
+      redirection('')
 
     } catch (error) {
       console.error("Error signing in with Google:", error);

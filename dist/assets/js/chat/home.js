@@ -5,6 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 import { database, db, auth, storage } from "./config.js";
 import { truncateText } from "./utils.js";
 import { getChatsForUser, loadChatUser, loadChatMessages  } from "./roaster.js";
+import { redirection } from "../custom-script.js";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -330,7 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     console.error("Error fetching user data:", error);
                 }
             } else {
-                window.location.replace('/dist/auth-login.html')
+                redirection('auth-login.html')
                 console.log("No user is logged in");
             }
         });
