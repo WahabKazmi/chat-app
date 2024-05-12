@@ -1,5 +1,7 @@
 import { doc, getDoc, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 import { db } from "../../config.js";
+import { truncateText } from "../../utils.js";
+import { loadChatMessages, loadChatUser } from "../../roaster/messages/index.js";
 
 // Fetch users from Firestore
 export async function fetchUsers() {

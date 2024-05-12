@@ -363,7 +363,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Listen to changes in the chat document to get the typing state
             onSnapshot(chatDocRef, (snapshot) => {
-                const isRecipientTyping = snapshot.data()['typing.' + recipientId];
+                const isRecipientTyping = snapshot.data()?.['typing.' + recipientId];
                 const typingIndicator = document.querySelector(".chat-input-typing");
                 if (isRecipientTyping) {
                     typingIndicator.style.display = "block"; // Show typing indicator
