@@ -424,7 +424,7 @@ async function loadChatMessages() {
 
 
                 if (message.sender === recipientId) {
-                    await updateDoc(doc.ref, {seen: true})
+                    await updateDoc(doc.ref, { seen: true })
                 }
 
             });
@@ -440,6 +440,7 @@ async function loadChatMessages() {
 
 // Function to retrieve chats for the current user
 export async function getChatsForUser() {
+    const currentUserId = localStorage.getItem('userId');
     const userList = document.getElementById("favourite-users");
 
     // Clear the list before inserting new items
@@ -453,25 +454,41 @@ export async function getChatsForUser() {
 
     const chatDocs = await getDocs(chatsQuery);
 
+    console.log('before loop', chatDocs.docs, currentUserId, userList)
+
+    // Array to store promises for fetching user information
+    const userPromises = [];
 
     for (const chatDoc of chatDocs.docs) {
         const chatData = chatDoc.data();
 
-        const userItem = document.createElement("li");
-        const currentUserId = localStorage.getItem('userId');
 
         // Determine the other participant (recipient)
         const recipientId = chatData.participants.find((id) => id !== currentUserId);
 
-        // Retrieve the recipient's user information
+        // Retrieve the recipient's user information (Push promise to array)
         const userRef = collection(db, "users");
-        const recipientDoc = await getDoc(doc(userRef, recipientId));
+        const promise = getDoc(doc(userRef, recipientId));
+        userPromises.push(promise);
+    }
+
+    // Fetch user information in parallel
+    const userDocs = await Promise.all(userPromises);
+
+    console.log('after loop')
+
+    // Iterate over chat documents and corresponding user documents
+    chatDocs.docs.forEach((chatDoc, index) => {
+        const chatData = chatDoc.data();
+        const recipientDoc = userDocs[index];
+        const recipientId = chatData.participants.find((id) => id !== currentUserId);
+
+        const userItem = document.createElement("li");
 
         let recipientProfilePic = "";
         if (recipientDoc.exists()) {
             recipientProfilePic = recipientDoc.data().profileImageUrl || "assets/images/users/user-dummy-img.jpg";
         }
-
 
         userItem.innerHTML = `
         <a href="#"  data-id="${recipientId}">
@@ -484,8 +501,7 @@ export async function getChatsForUser() {
         </a>`;
 
         userList.appendChild(userItem);
-
-    }
+    });
 
     document.querySelectorAll('.chat-user-list a').forEach(item => {
         item.addEventListener("click", (event) => {
@@ -498,8 +514,8 @@ export async function getChatsForUser() {
     })
 
     listenToPresence()
-
 }
+
 
 
 
@@ -515,7 +531,6 @@ async function searchChatsByUsername(username) {
     );
 
     const chatDocs = await getDocs(chatsQuery);
-
     for (const chatDoc of chatDocs.docs) {
         const chatData = chatDoc.data();
 
@@ -574,7 +589,5 @@ searchInput.addEventListener("input", function (event) {
     }
 });
 
-
-getChatsForUser();
 
 export { loadChatUser, loadChatMessages }

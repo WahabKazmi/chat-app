@@ -298,6 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         online: false,
                         lastOnline: Date.now()
                     });
+                    getChatsForUser();
 
 
                     const userDocRef = doc(db, "users", user.uid);
