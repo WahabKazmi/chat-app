@@ -1,4 +1,4 @@
-import { deleteDoc, collection, query, where, orderBy, getDocs, getDoc, doc, onSnapshot, Timestamp, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+import { deleteDoc, collection, query, where, orderBy, getDocs, getDoc, doc, onSnapshot, Timestamp, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 import { ref as rlRef, onDisconnect, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 import { database, db, auth, storage } from "./config.js";
 
@@ -255,175 +255,178 @@ document.addEventListener("click", async (event) => {
 });
 
 async function loadChatMessages() {
-    const chatMessagesList = document.getElementById("chat-messages-list"); // The chat conversation list
+    const chatMessagesList = document.getElementById("chat-messages-list");
     const currentUserId = localStorage.getItem("userId");
     const recipientId = localStorage.getItem("chat");
 
     if (recipientId && currentUserId) {
-        // Determine the chat document ID
         const chatId = (recipientId > currentUserId)
             ? `${recipientId}+${currentUserId}`
             : `${currentUserId}+${recipientId}`;
 
-        // Query the 'messages' sub-collection, ordered by timestamp
-        const currentUserDocRef = doc(db, "users", currentUserId); // Reference to the Firestore document
-        const recipientUserDocRef = doc(db, "users", recipientId); // Reference to the Firestore document
-        const currentUserDoc = await getDoc(currentUserDocRef); // Fetch the user data
-        const recipientUserDoc = await getDoc(recipientUserDocRef); // Fetch the user data
+        const currentUserDocRef = doc(db, "users", currentUserId);
+        const recipientUserDocRef = doc(db, "users", recipientId);
+        const currentUserDoc = await getDoc(currentUserDocRef);
+        const recipientUserDoc = await getDoc(recipientUserDocRef);
+
         const messagesCollectionRef = collection(db, `chats/${chatId}/messages`);
         const messagesQuery = query(messagesCollectionRef, orderBy("timestamp"));
 
-        // Listen for real-time updates
         onSnapshot(messagesQuery, (snapshot) => {
-            chatMessagesList.innerHTML = ""; // Clear existing messages
-
-            snapshot.forEach((doc) => {
+            chatMessagesList.innerHTML = "";
+            snapshot.forEach(async (doc) => {
                 const message = doc.data();
                 const isSentByCurrentUser = message.sender === currentUserId;
 
                 const messageItem = document.createElement("li");
                 messageItem.className = `chat-list ${isSentByCurrentUser ? "right" : "left"}`;
                 const validDate = formatDate(message.timestamp);
-                if (message.type === 'files')
-                    console.log('filessss ====>', message)
+                console.log({ message })
                 const messageContent = `
-                    <div class="conversation-list">
-                        ${!isSentByCurrentUser ? `<div class="chat-avatar">
-                            <img src="${recipientUserDoc.data()?.profileImageUrl || 'assets/images/users/user-dummy-img.jpg'}" alt="" class="rounded-circle">
-                        </div>` : ""}
-                        <div class="user-chat-content">
-                            <div class="ctext-wrap">
-                                <div class="ctext-wrap-content">
-                                    ${message.type === 'files' ? `
-                                    <div>
-                                    ${message.files.map(item => {
+                <div class="conversation-list">
+                    ${!isSentByCurrentUser ? `<div class="chat-avatar">
+                        <img src="${recipientUserDoc.data()?.profileImageUrl || 'assets/images/users/user-dummy-img.jpg'}" alt="" class="rounded-circle">
+                    </div>` : ""}
+                    <div class="user-chat-content">
+                        <div class="ctext-wrap">
+                            <div class="ctext-wrap-content">
+                                ${message.type === 'files' ? `
+                                <div>
+                                ${message.files.map(item => {
                     return `
-                                        <div class="p-3 border rounded-3">
-                                            <div class="d-flex align-items-center attached-file">
-                                                <div class="flex-shrink-0 avatar-sm me-3 ms-0 attached-file-avatar">
-                                                    <div class="avatar-title bg-soft-light rounded-circle fs-20">
-                                                        <i class="ri-attachment-2"></i>
-                                                    </div>
+                                    <div class="p-3 border rounded-3">
+                                        <div class="d-flex align-items-center attached-file">
+                                            <div class="flex-shrink-0 avatar-sm me-3 ms-0 attached-file-avatar">
+                                                <div class="avatar-title bg-soft-light rounded-circle fs-20">
+                                                    <i class="ri-attachment-2"></i>
                                                 </div>
-                                                <div class="flex-grow-1 overflow-hidden">
-                                                    <div class="text-start">
-                                                        <h5 class="fs-14 text-white mb-1">
-                                                            ${item.fileName}</h5>
-                                                        <p class="text-white-50 text-truncate fs-13 mb-0">${item.fileSize}</p>
-                                                    </div>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <div class="text-start">
+                                                    <h5 class="fs-14 text-white mb-1">
+                                                        ${item.fileName}</h5>
+                                                    <p class="text-white-50 text-truncate fs-13 mb-0">${item.fileSize}</p>
                                                 </div>
-                                                <div class="flex-shrink-0 ms-4">
-                                                    <div class="d-flex gap-2 fs-20 d-flex align-items-start">
-                                                        <div> <a href="${item.fileUrl}" download class="text-white-50"> <i class="bx bxs-download"></i> </a> </div>
-                                                    </div>
+                                            </div>
+                                            <div class="flex-shrink-0 ms-4">
+                                                <div class="d-flex gap-2 fs-20 d-flex align-items-start">
+                                                    <div> <a href="${item.fileUrl}" download class="text-white-50"> <i class="bx bxs-download"></i> </a> </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        `
-                })}
                                     </div>
-                                    ` : ''}
-                                    ${message.type === 'audio' ? `<audio src="${message.audioUrl}" controls/>` : ''}
-                                    ${message.type === 'audios' ?
+                                    `
+                })}
+                                </div>
+                                ` : ''}
+                                ${message.type === 'audio' ? `<audio src="${message.audioUrl}" controls/>` : ''}
+                                ${message.type === 'audios' ?
 
                         message.audios.map(item => {
                             console.log('audios ===> ', message.audios.length)
                             return `
-                                            <audio src="${item.fileUrl}" controls/>
-                                            `
+                                        <audio src="${item.fileUrl}" controls/>
+                                        `
                         })
 
                         : ''}
-                                    ${message.type !== 'audio' || message.type !== 'files' ? `<span class="ctext-content">${message?.text || ''}</span>` : ''}
-                                    ${message.type === 'images' ? `
-                                    <div class="message-img mb-0">
-                                        ${message.images.map(item => {
+                                ${message.type !== 'audio' || message.type !== 'files' ? `<span class="ctext-content">${message?.text || ''}</span>` : ''}
+                                ${message.type === 'images' ? `
+                                <div class="message-img mb-0">
+                                    ${message.images.map(item => {
                             return `
-                                            <div class="message-img-list">
-                                                <div> <a class="popup-img d-inline-block" href="${item.fileUrl}"> <img
-                                                            src="${item.fileUrl}" alt="" class="rounded border img-thumbnail"> </a> </div>
-                                                <div class="message-img-link">
-                                                    <ul class="list-inline mb-0">
-                                                        <li class="list-inline-item dropdown"> <a class="dropdown-toggle" href="#" role="button"
-                                                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i
-                                                                    class="bx bx-dots-horizontal-rounded"></i> </a>
-                                                            <div class="dropdown-menu"> <a
-                                                                    class="dropdown-item d-flex align-items-center justify-content-between"
-                                                                    href="${item.fileUrl}" download="">Download <i
-                                                                        class="bx bx-download ms-2 text-muted"></i></a> <a
-                                                                    class="dropdown-item d-flex align-items-center justify-content-between" href="#"
-                                                                    data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i
-                                                                        class="bx bx-share ms-2 text-muted"></i></a> <a
-                                                                    class="dropdown-item d-flex align-items-center justify-content-between" href="#"
-                                                                    data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i
-                                                                        class="bx bx-share-alt ms-2 text-muted"></i></a> <a
-                                                                    class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i
-                                                                        class="bx bx-bookmarks text-muted ms-2"></i></a> <a
-                                                                    class="dropdown-item d-flex align-items-center justify-content-between delete-image"
-                                                                    href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a> </div>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                            `;
-                        })}
-                                    </div>
-                                    ` : ''}
-
-                                </div>
-                                    ${message?.reactions?.length ? `
-                                    <div class="emoji-icon">
-                                            ${message?.reactions?.map(item => {
-                            console.log({ item, message, id: doc.id })
-                            return `
-                                                <a class="dropdown-toggle added-reactions" href="javascript:void;" data-user-id="${item.userId}"  data-reaction-emoji="${item.emoji}"  data-message-id="${doc.id}">${item.emoji}</a>
-                                                `
-                        })}
-                                    </div>
-                                ` : ''}
-                                <div class="align-self-start message-box-drop d-flex">
-                                    <div class="dropdown"> <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                                            aria-haspopup="true" aria-expanded="false"> <i class="ri-emotion-happy-line"></i>
-                                        </a>
-                                        <div class="dropdown-menu emoji-dropdown-menu">
-                                            <div class="hstack align-items-center gap-2 px-2 fs-25">
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">👍</a>
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">❤️</a>
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">😆</a>
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">😮</a>
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">😢</a>
-                                                    <a href="javascript:void(0);" data-id="${doc.id}">😡</a>
+                                        <div class="message-img-list">
+                                            <div> <a class="popup-img d-inline-block" href="${item.fileUrl}"> <img
+                                                        src="${item.fileUrl}" alt="" class="rounded border img-thumbnail"> </a> </div>
+                                            <div class="message-img-link">
+                                                <ul class="list-inline mb-0">
+                                                    <li class="list-inline-item dropdown"> <a class="dropdown-toggle" href="#" role="button"
+                                                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i
+                                                                class="bx bx-dots-horizontal-rounded"></i> </a>
+                                                        <div class="dropdown-menu"> <a
+                                                                class="dropdown-item d-flex align-items-center justify-content-between"
+                                                                href="${item.fileUrl}" download="">Download <i
+                                                                    class="bx bx-download ms-2 text-muted"></i></a> <a
+                                                                class="dropdown-item d-flex align-items-center justify-content-between" href="#"
+                                                                data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i
+                                                                    class="bx bx-share ms-2 text-muted"></i></a> <a
+                                                                class="dropdown-item d-flex align-items-center justify-content-between" href="#"
+                                                                data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i
+                                                                    class="bx bx-share-alt ms-2 text-muted"></i></a> <a
+                                                                class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i
+                                                                    class="bx bx-bookmarks text-muted ms-2"></i></a> <a
+                                                                class="dropdown-item d-flex align-items-center justify-content-between delete-image"
+                                                                href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a> </div>
+                                                    </li>
+                                                </ul>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="dropdown"> <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                                            aria-haspopup="true" aria-expanded="false"> <i class="ri-more-2-fill"></i> </a>
-                                        <div class="dropdown-menu">
-                                                <a
-                                                class="dropdown-item d-flex align-items-center justify-content-between" href="#"
-                                                data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i
-                                                    class="bx bx-share-alt ms-2 text-muted"></i></a>
-                                                    ${message.sender !== localStorage.getItem('chat') ? `
-                                                    <a
-                                                class="dropdown-item d-flex align-items-center justify-content-between delete-item delete-msg"
-                                                data-message-id="${doc.id}"
-                                                href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a> 
-                                                    ` : ''}</div>
+                                        `;
+                        })}
+                                </div>
+                                ` : ''}
+
+                            </div>
+                                ${message?.reactions?.length ? `
+                                <div class="emoji-icon">
+                                        ${message?.reactions?.map(item => {
+                            console.log({ item, message, id: doc.id })
+                            return `
+                                            <a class="dropdown-toggle added-reactions" href="javascript:void;" data-user-id="${item.userId}"  data-reaction-emoji="${item.emoji}"  data-message-id="${doc.id}">${item.emoji}</a>
+                                            `
+                        })}
+                                </div>
+                            ` : ''}
+                            <div class="align-self-start message-box-drop d-flex">
+                                <div class="dropdown"> <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false"> <i class="ri-emotion-happy-line"></i>
+                                    </a>
+                                    <div class="dropdown-menu emoji-dropdown-menu">
+                                        <div class="hstack align-items-center gap-2 px-2 fs-25">
+                                                <a href="javascript:void(0);" data-id="${doc.id}">👍</a>
+                                                <a href="javascript:void(0);" data-id="${doc.id}">❤️</a>
+                                                <a href="javascript:void(0);" data-id="${doc.id}">😆</a>
+                                                <a href="javascript:void(0);" data-id="${doc.id}">😮</a>
+                                                <a href="javascript:void(0);" data-id="${doc.id}">😢</a>
+                                                <a href="javascript:void(0);" data-id="${doc.id}">😡</a>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="conversation-name">
-                                <span class="chat-time">${validDate}</span>
+                                <div class="dropdown"> <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false"> <i class="ri-more-2-fill"></i> </a>
+                                    <div class="dropdown-menu">
+                                            <a
+                                            class="dropdown-item d-flex align-items-center justify-content-between" href="#"
+                                            data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i
+                                                class="bx bx-share-alt ms-2 text-muted"></i></a>
+                                                ${message.sender !== localStorage.getItem('chat') ? `
+                                                <a
+                                            class="dropdown-item d-flex align-items-center justify-content-between delete-item delete-msg"
+                                            data-message-id="${doc.id}"
+                                            href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a> 
+                                                ` : ''}</div>
+                                </div>
                             </div>
                         </div>
-                        ${isSentByCurrentUser ? `<div class="chat-avatar">
-                            <img src="${currentUserDoc.data()?.profileImageUrl || 'assets/images/users/user-dummy-img.jpg'}" alt="" class="rounded-circle">
-                        </div>` : ""}
+                        <div class="conversation-name">
+                            <span class="chat-time">${validDate}</span>
+                            ${message.seen && message.sender === currentUserId ? `<span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span>` : ''}
+                        </div>
                     </div>
-                `;
+                    ${isSentByCurrentUser ? `<div class="chat-avatar">
+                        <img src="${currentUserDoc.data()?.profileImageUrl || 'assets/images/users/user-dummy-img.jpg'}" alt="" class="rounded-circle">
+                    </div>` : ""}
+                </div>
+            `;
 
                 messageItem.innerHTML = messageContent;
                 chatMessagesList.appendChild(messageItem);
+
+
+                if (message.sender === recipientId) {
+                    await updateDoc(doc.ref, {seen: true})
+                }
+
             });
 
             // Scroll to the bottom to display the latest message
@@ -433,6 +436,7 @@ async function loadChatMessages() {
         console.error("Missing recipient ID or current user ID.");
     }
 }
+
 
 // Function to retrieve chats for the current user
 export async function getChatsForUser() {
@@ -573,4 +577,4 @@ searchInput.addEventListener("input", function (event) {
 
 getChatsForUser();
 
-export {loadChatUser, loadChatMessages }
+export { loadChatUser, loadChatMessages }

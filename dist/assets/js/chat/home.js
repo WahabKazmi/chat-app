@@ -93,6 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
             recipient: recipientId,
             timestamp: new Date(),
             files: fileArray, // Array of file details
+            seen: false
         };
 
         try {
@@ -148,6 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
             recipient: recipientId,
             timestamp: new Date(),
             images: imageArray, // Array with image details
+            seen: false
         };
 
         try {
@@ -203,6 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
             recipient: recipientId,
             timestamp: new Date(),
             audios: audioArray, // Array with audio details
+            seen: false
         };
 
         try {
@@ -458,6 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 sender: currentUserId,
                 recipient: recipientId,
                 timestamp: new Date(),
+                seen: false,
             };
 
             try {
@@ -633,6 +637,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 sender: currentUserId,
                 recipient: recipientId,
                 timestamp: new Date(),
+                seen: false
             };
 
             await addDoc(collection(db, `chats/${chatId}/messages`), message); // Add to Firestore messages
