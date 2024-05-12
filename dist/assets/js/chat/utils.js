@@ -1,4 +1,7 @@
-import { Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+import { Timestamp, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-storage.js";
+import { db, storage } from "./config.js";
+
 
 const truncateText = (text = '', maxLength = 30) => {
     if (text?.length <= maxLength) {
@@ -19,7 +22,7 @@ const truncateText = (text = '', maxLength = 30) => {
 
 
 function getValidDate(timestamp) {
-    
+
     if (!timestamp) {
         console.error("Invalid timestamp:", timestamp);
         return new Date(); // Return current date as a fallback
@@ -74,5 +77,29 @@ function formatDate(timestamp) {
     }
 }
 
+async function uploadFile(file, storagePath) {
 
-export {truncateText, formatDate}
+    const storageRef = ref(storage, storagePath);
+    try {
+        // Upload the file
+        await uploadBytes(storageRef, file);
+
+        // Get the download URL
+        const downloadURL = await getDownloadURL(storageRef);
+        return downloadURL;
+    } catch (error) {
+        console.error("Error uploading file:", error);
+        throw error;
+    }
+}
+
+
+// Function to fetch user data from Firestore
+async function fetchUserData(userId) {
+    const userRef = doc(db, "users", userId);
+    const userSnapshot = await getDoc(userRef);
+    if (userSnapshot.exists()) 
+        return userSnapshot.data();
+    else return null;
+}
+export { truncateText, formatDate, uploadFile, fetchUserData }
