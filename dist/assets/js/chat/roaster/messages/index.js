@@ -1,260 +1,10 @@
 import { deleteDoc, collection, query, where, orderBy, getDocs, getDoc, doc, onSnapshot, Timestamp, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 import { ref as rlRef, onDisconnect, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
-import { database, db, auth, storage } from "./config.js";
+import { formatDate } from "./../../utils.js";
+import { db, database } from "../../config.js";
+import { listenToPresence } from "../presense/index.js";
 
-
-
-// Get the currently logged-in user ID
-const currentUserId = localStorage.getItem('userId'); // Replace with actual user ID
-function listenToPresence() {
-    const presenceRef = rlRef(database, "presence"); // Reference to the entire 'presence' array
-
-    onValue(presenceRef, (snapshot) => {
-
-        const presenceArray = snapshot.val(); // Get the whole presence array
-
-        if (presenceArray) {
-            // Convert the object to an array of users with their status
-            const users = Object.entries(presenceArray).map(([userId, status]) => ({
-                userId,
-                isOnline: status.online || false,
-                lastOnline: status.lastOnline || null,
-            }));
-
-            users.forEach(user => {
-                document.querySelectorAll('.chat-message-list li .chat-user-img').forEach(item => {
-                    if (item.getAttribute('data-id') === user.userId) {
-                        if (user.isOnline) {
-                            item.classList.remove('offline')
-                            item.classList.add('online')
-                        } else {
-                            item.classList.remove('online')
-                            item.classList.add('offline')
-                        }
-                    }
-                })
-            });
-
-        } else {
-            console.log("Presence array is empty or not found.");
-        }
-    }, (error) => {
-        console.error("Error listening to presence array:", error);
-    });
-}
-
-function getValidDate(timestamp) {
-    if (!timestamp) {
-        console.error("Invalid timestamp:", timestamp);
-        return new Date(); // Return current date as a fallback
-    }
-
-    if (timestamp instanceof Timestamp) {
-        return timestamp.toDate(); // Convert Firestore Timestamp to Date
-    }
-
-    if (typeof timestamp === "string" || typeof timestamp === "number") {
-        const date = new Date(timestamp);
-        if (isNaN(date)) {
-            console.error("Invalid date conversion:", timestamp);
-            return new Date(); // Return current date as fallback
-        }
-        return date;
-    }
-
-    console.error("Unrecognized timestamp format:", timestamp);
-    return new Date(); // Fallback to current date
-}
-
-function formatDate(timestamp) {
-    // Convert the given timestamp into a valid JavaScript Date object
-    const date = getValidDate(timestamp);
-
-    // Get today's date and set its time to midnight
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to midnight to compare only the date
-
-    // Get the current date from the input timestamp and set its time to midnight
-    const inputDate = new Date(date);
-    inputDate.setHours(0, 0, 0, 0);
-
-    const isToday = today.getTime() === inputDate.getTime(); // Check if the input date is today
-
-    if (isToday) {
-        // If it's today's date, return the formatted time
-        return new Intl.DateTimeFormat("en-US", {
-            hour: "numeric",
-            minute: "numeric",
-            second: "numeric",
-            hour12: true,
-        }).format(date);
-    } else {
-        // If it's not today, return a short date format
-        return new Intl.DateTimeFormat("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-        }).format(date);
-    }
-}
-
-
-async function loadChatUser() {
-    // Get the user ID from localStorage
-    const chatUserId = localStorage.getItem('chat');
-
-    if (chatUserId) {
-        const userDocRef = doc(db, "users", chatUserId); // Reference to the Firestore document
-        const userDoc = await getDoc(userDocRef); // Fetch the user data
-
-        if (userDoc.exists()) {
-
-            const presenceRef = rlRef(database, `presence/${chatUserId}`);
-
-            onValue(presenceRef, (snapshot) => {
-                const status = snapshot.val();
-                const el = document.querySelector("#users-chat .chat-user-img");
-                const isOnline = status ? status.online : false;
-                if (isOnline) {
-                    el.classList.remove("offline");
-                    el.classList.add("online");
-                    document.querySelector('.online-state-text').innerHTML = 'online';
-                }
-                else {
-                    el.classList.add("offline")
-                    el.classList.remove("online")
-                    document.querySelector('.online-state-text').innerHTML = 'offline';
-                }
-            });
-
-
-            const user = userDoc.data(); // Extract the user data
-
-            // Update the chat conversation section
-            document.querySelector("#users-chat img.avatar-sm").src = user.profileImageUrl || 'assets/images/users/user-dummy-img.jpg';
-            document.querySelector("#users-chat .user-profile-show").textContent = user.username || 'Unknown User';
-
-            console.log("User data loaded:", user);
-        } else {
-            console.error("User document not found for ID:", chatUserId);
-        }
-    } else {
-        console.error("No chat user ID found in localStorage.");
-    }
-}
-
-// Function to add a reaction to a message
-async function addReactionToMessage(messageId, reactionEmoji) {
-    const recipientId = localStorage.getItem('chat');
-    const currentUserId = localStorage.getItem('userId');
-    const chatId = (recipientId > currentUserId)
-        ? `${recipientId}+${currentUserId}`
-        : `${currentUserId}+${recipientId}`;
-
-    try {
-        const messageDocRef = doc(db, `chats/${chatId}/messages/${messageId}`);
-        const messageDocSnapshot = await getDoc(messageDocRef);
-
-        if (messageDocSnapshot.exists()) {
-            const messageData = messageDocSnapshot.data();
-            const reactions = messageData.reactions || [];
-
-            // Check if the user has already reacted to the message
-            const userReactionIndex = reactions.findIndex(item => item.userId === currentUserId);
-
-            // If the user has already reacted, update their existing reaction
-            if (userReactionIndex !== -1) {
-                reactions[userReactionIndex] = {
-                    userId: currentUserId,
-                    emoji: reactionEmoji,
-                    timestamp: new Date()
-                };
-            } else {
-                // If the user has not reacted, add a new reaction
-                reactions.push({
-                    userId: currentUserId,
-                    emoji: reactionEmoji,
-                    timestamp: new Date()
-                });
-            }
-
-            // Update the reactions array in the message document
-            await updateDoc(messageDocRef, { reactions });
-
-            console.log(`Reaction '${reactionEmoji}' added to message: ${messageId}`);
-        } else {
-            console.error(`Message ${messageId} does not exist in chat ${chatId}`);
-        }
-    } catch (error) {
-        console.error("Error adding reaction:", error);
-    }
-}
-
-
-// Event delegation for dynamically rendered elements
-document.addEventListener("click", async (event) => {
-    const target = event.target;
-    const userId = localStorage.getItem('userId');
-    const recipientId = localStorage.getItem('chat');
-    const chatId = (recipientId > currentUserId)
-        ? `${recipientId}+${currentUserId}`
-        : `${currentUserId}+${recipientId}`;
-
-    // Check if the clicked element is part of the reaction bar
-    if (target.closest(".hstack")) {
-        const emojiElement = target.closest("a"); // The clicked emoji
-        if (emojiElement) {
-            const reactionEmoji = emojiElement.textContent.trim(); // Get the reaction emoji
-            const messageId = emojiElement.getAttribute('data-id'); // Replace with the correct message ID
-
-            await addReactionToMessage(messageId, reactionEmoji); // Add the reaction to the message
-        }
-    }
-
-
-
-    if (event.target.classList.contains('added-reactions')) {
-        const messageId = event.target.dataset.messageId;
-        const reactionEmoji = event.target.dataset.reactionEmoji;
-
-
-
-        try {
-            // Get the message document reference
-            const messageDocRef = doc(db, `chats/${chatId}/messages/${messageId}`);
-            const messageDoc = await getDoc(messageDocRef);
-
-            // Filter out the user's own reaction
-            const updatedReactions = messageDoc.data().reactions.filter(reaction => reaction.userId !== userId || reaction.emoji !== reactionEmoji);
-
-            // Update the reactions array in Firestore
-            await updateDoc(messageDocRef, { reactions: updatedReactions });
-        } catch (error) {
-            console.error("Error deleting reaction:", error);
-        }
-    }
-
-    if (event.target.classList.contains('delete-msg')) {
-        const messageId = event.target.dataset.messageId;
-
-        try {
-            // Get the reference to the message document
-            const messageDocRef = doc(db, `chats/${chatId}/messages/${messageId}`);
-            const message = await getDoc(messageDocRef);
-            console.log({ message: message.data() })
-            // Delete the message document from Firestore
-            if (message.data().sender === userId)
-                await deleteDoc(messageDocRef);
-            else
-                console.log('Cannot delete this message')
-
-        } catch (error) {
-            console.error("Error deleting message:", error);
-        }
-    }
-});
-
-async function loadChatMessages() {
+export async function loadChatMessages() {
     const chatMessagesList = document.getElementById("chat-messages-list");
     const currentUserId = localStorage.getItem("userId");
     const recipientId = localStorage.getItem("chat");
@@ -263,7 +13,7 @@ async function loadChatMessages() {
         const chatId = (recipientId > currentUserId)
             ? `${recipientId}+${currentUserId}`
             : `${currentUserId}+${recipientId}`;
-
+        
         const currentUserDocRef = doc(db, "users", currentUserId);
         const recipientUserDocRef = doc(db, "users", recipientId);
         const currentUserDoc = await getDoc(currentUserDocRef);
@@ -437,6 +187,49 @@ async function loadChatMessages() {
     }
 }
 
+export async function loadChatUser() {
+    // Get the user ID from localStorage
+    const chatUserId = localStorage.getItem('chat');
+
+    if (chatUserId) {
+        const userDocRef = doc(db, "users", chatUserId); // Reference to the Firestore document
+        const userDoc = await getDoc(userDocRef); // Fetch the user data
+
+        if (userDoc.exists()) {
+
+            const presenceRef = rlRef(database, `presence/${chatUserId}`);
+
+            onValue(presenceRef, (snapshot) => {
+                const status = snapshot.val();
+                const el = document.querySelector("#users-chat .chat-user-img");
+                const isOnline = status ? status.online : false;
+                if (isOnline) {
+                    el.classList.remove("offline");
+                    el.classList.add("online");
+                    document.querySelector('.online-state-text').innerHTML = 'online';
+                }
+                else {
+                    el.classList.add("offline")
+                    el.classList.remove("online")
+                    document.querySelector('.online-state-text').innerHTML = 'offline';
+                }
+            });
+
+
+            const user = userDoc.data(); // Extract the user data
+
+            // Update the chat conversation section
+            document.querySelector("#users-chat img.avatar-sm").src = user.profileImageUrl || 'assets/images/users/user-dummy-img.jpg';
+            document.querySelector("#users-chat .user-profile-show").textContent = user.username || 'Unknown User';
+
+            console.log("User data loaded:", user);
+        } else {
+            console.error("User document not found for ID:", chatUserId);
+        }
+    } else {
+        console.error("No chat user ID found in localStorage.");
+    }
+}
 
 // Function to retrieve chats for the current user
 export async function getChatsForUser() {
@@ -512,82 +305,6 @@ export async function getChatsForUser() {
             document.querySelector('.user-chat').classList.add('user-chat-show');
         })
     })
-
+    
     listenToPresence()
 }
-
-
-
-
-// Function to search chats by recipient username
-async function searchChatsByUsername(username) {
-    const userList = document.getElementById("favourite-users");
-
-    // Query the "chats" collection to get all chats where the logged-in user is a participant
-    const chatsQuery = query(
-        collection(db, "chats"),
-        where("participants", "array-contains", currentUserId),
-        orderBy("lastMessage.timestamp", "desc") // Order by the last message timestamp
-    );
-
-    const chatDocs = await getDocs(chatsQuery);
-    for (const chatDoc of chatDocs.docs) {
-        const chatData = chatDoc.data();
-
-        const recipientId = chatData.participants.find((id) => id !== currentUserId);
-
-        // Retrieve the recipient's user information
-        const userRef = collection(db, "users");
-        const recipientDoc = await getDoc(doc(userRef, recipientId));
-
-        // Check if recipient username matches the search query
-        if (recipientDoc.exists() && recipientDoc.data()?.username.toLowerCase().includes(username.toLowerCase())) {
-            userList.innerHTML = "";
-            const userItem = document.createElement("li");
-
-            userItem.innerHTML = `
-                <a href="#"  data-id="${recipientId}">
-                    <span class="chat-user-img offline" data-id="${recipientId}">
-                        <img src="${recipientDoc.data().profileImageUrl || 'assets/images/users/user-dummy-img.jpg'}" class="rounded-circle avatar-xs" alt="">
-                        <span class="user-status"></span>
-                    </span>
-                    <span class="chat-username">${recipientDoc.data().username}</span>
-                    <span class="chat-user-message">${chatData.lastMessage.text}</span>
-                </a>`;
-
-            userList.appendChild(userItem);
-        }
-
-        document.querySelectorAll('.chat-user-list a').forEach(item => {
-            item.addEventListener("click", (event) => {
-                event.preventDefault();
-                localStorage.setItem('chat', item.getAttribute('data-id'))
-                loadChatUser();
-                loadChatMessages();
-
-                document.querySelector('.user-chat').classList.add('user-chat-show');
-                // user-chat-show
-            })
-        })
-        listenToPresence()
-
-    }
-
-
-
-
-}
-
-// Example usage
-const searchInput = document.getElementById("searchChatUser");
-searchInput.addEventListener("input", function (event) {
-    const searchValue = event.target.value.trim(); // Get the trimmed search value
-    if (searchValue) {
-        searchChatsByUsername(searchValue); // Search chats by username
-    } else {
-        getChatsForUser(); // If search value is empty, retrieve all chats
-    }
-});
-
-
-export { loadChatUser, loadChatMessages }

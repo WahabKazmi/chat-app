@@ -4,9 +4,8 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-storage.js";
 import { database, db, auth, storage } from "./config.js";
 import { truncateText } from "./utils.js";
-import { getChatsForUser, loadChatUser, loadChatMessages } from "./roaster.js";
+import { loadChatUser, loadChatMessages, getChatsForUser } from "./roaster/messages/index.js";
 import { redirection } from "../custom-script.js";
-
 
 document.addEventListener("DOMContentLoaded", () => {
     loadChatUser();
