@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("User logged in:", userCredential.user);
 
             // Redirect or perform other actions upon successful login
-            window.location.href = "/dist/"; // Redirect to the desired page
+            redirection('')
         } catch (error) {
             console.error("Login failed:", error);
             alert("Login failed: " + error.message); // Display an error message
