@@ -62,6 +62,10 @@
             z-index: 1;
         }
 
+        .chat-list li:hover>a {
+            background: rgba(255, 255, 255, .3);
+        }
+
         @media (max-width: 991.98px) {
 
             .chat-room-list {
@@ -1301,7 +1305,7 @@
                                                 data-bs-content="<div class='loader-line'><div class='line'></div><div class='line'></div><div class='line'></div><div class='line'></div><div class='line'></div></div>">
                                                 <button type="button"
                                                     class="btn btn-link text-decoration-none btn-lg waves-effect"
-                                                    onclick="audioPermission()" id="voice-recorder-btn">
+                                                    id="voice-recorder-btn">
                                                     <i class="bx bx-microphone align-middle"></i>
                                                 </button>
                                                 <div class="voice-recording-dialog" style="display: none;">
